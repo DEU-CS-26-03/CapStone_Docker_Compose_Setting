@@ -3,23 +3,30 @@ version: '3.8'
 services:
   mariadb:
     image: mariadb:10.11
-    container_name: capstone-mariadb  # 수정: local-mysql -> capstone-mariadb
+    container_name: capstone-mariadb
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 1234
-      MYSQL_DATABASE: capstone_db
-      # 주의: MYSQL_USER에 'root'를 넣으면 에러가 납니다. root는 이미 존재하므로 삭제했습니다.
+      # .env 파일의 변수를 환경변수로 주입 (MariaDB 공식 권장 변수명 사용)
+      MARIADB_ROOT_PASSWORD: ${MARIA_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIA_DATABASE}
+      MARIADB_USER: ${MARIA_USER}
+      MARIADB_PASSWORD: ${MARIA_PASSWORD}
       TZ: Asia/Seoul
+    command:
+      # 한글 데이터 깨짐 방지를 위한 기본 인코딩 설정 추가
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     ports:
-      - "3306:3306"
+      # 호스트포트:컨테이너포트
+      - "${MARIA_PORT:-3306}:3306"
     volumes:
       - ./mariadb/data:/var/lib/mysql
       - ./mariadb/init:/docker-entrypoint-initdb.d
     networks:
       - capstone-net
     healthcheck:
-      # 환경변수 치환 오류를 막기 위해 비밀번호(1234)를 직접 입력했습니다.
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p1234 || exit 1"]
+      # 비밀번호 하드코딩 없이 MariaDB 내장 헬스체크 스크립트 사용
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
