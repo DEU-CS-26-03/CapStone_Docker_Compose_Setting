@@ -1,20 +1,32 @@
+version: '3.8'
+
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: capstone-mysql
+  mariadb:
+    image: mariadb:10.11
+    container_name: capstone-mariadb
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      # .env 파일의 변수를 환경변수로 주입 (MariaDB 공식 권장 변수명 사용)
+      MARIADB_ROOT_PASSWORD: ${MARIA_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIA_DATABASE}
+      MARIADB_USER: ${MARIA_USER}
+      MARIADB_PASSWORD: ${MARIA_PASSWORD}
+      TZ: Asia/Seoul
+    command:
+      # 한글 데이터 깨짐 방지를 위한 기본 인코딩 설정 추가
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
     ports:
-      - "3306:3306"
+      # 호스트포트:컨테이너포트
+      - "${MARIA_PORT:-3306}:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
+      - ./mariadb/data:/var/lib/mysql
+      - ./mariadb/init:/docker-entrypoint-initdb.d
     networks:
       - capstone-net
     healthcheck:
-      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${MYSQL_ROOT_PASSWORD} || exit 1"]
+      # 비밀번호 하드코딩 없이 MariaDB 내장 헬스체크 스크립트 사용
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -40,24 +52,34 @@ services:
       context: ./spring
       dockerfile: Dockerfile
     container_name: capstone-spring
-    ports:
-      - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Seoul
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      PYTHON_SERVICE_URL: http://python-app:8000
+    restart: always
     depends_on:
-      mysql:
+      mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
       python-app:
         condition: service_started
+    environment:
+      # DB 접속 정보 - .env 변수로 하드코딩 제거
+      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:${MARIA_PORT:-3306}/${MARIA_DATABASE}?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+      SPRING_DATASOURCE_USERNAME: ${MARIA_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MARIA_PASSWORD}
+      # Redis 접속 정보
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      # Python 서비스 URL (서비스명 기준)
+      PYTHON_SERVICE_URL: http://python-app:8000
+      TZ: Asia/Seoul
+      # JWT 설정
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
+
+    ports:
+      - "8080:8080"
     networks:
       - capstone-net
+
 
   python-app:
     build:
@@ -84,7 +106,7 @@ services:
       - capstone-net
 
 volumes:
-  mysql_data:
+  # mysql_data: 는 ./mariadb/data 바인드 마운트를 사용하므로 불필요하여 삭제했습니다.
   redis_data:
 
 networks:

@@ -1,4 +1,4 @@
-package com.capstone.service;
+package com.capstone.user.service;
 
 import java.io.IOException;
 

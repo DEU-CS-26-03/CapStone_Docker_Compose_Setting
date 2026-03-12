@@ -1,4 +1,4 @@
-package com.capstone.controller;
+package com.capstone.auth.controller;
 
 import java.io.IOException;
 
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.capstone.service.TryOnService;
+import com.capstone.user.service.TryOnService;
 
 @RestController
 @RequestMapping("/api/fitting")
