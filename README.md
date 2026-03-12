@@ -1,5 +1,3 @@
-# test_rep_2
-
 ## 🐬Docker 사용법
 
 ### 기본적인 docker 명령어 & hostNumber
