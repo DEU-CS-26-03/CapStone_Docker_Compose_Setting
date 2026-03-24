@@ -89,16 +89,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      APP_ENV: ${APP_ENV}
-      TRYON_MODE: ${TRYON_MODE}
-      REDIS_URL: redis://redis:6379/0
-      WORKSPACE_DIR: /app/workspace
-      MOCK_RESULT_IMAGE: /app/workspace/mock/mock_result.jpg
-      IDM_VTON_ROOT: /app/vton
+      # Mock 모드 여부 (true: mock 이미지 반환 / false: 실제 CatVTON 추론)
+      USE_MOCK: ${USE_MOCK:-true}
+      TZ: Asia/Seoul
     volumes:
-      - ./python/workspace:/app/workspace
+      # 업로드 파일, 결과 이미지 영속화
+      - ./python/workspace/uploads:/app/workspace/uploads
+      - ./python/workspace/results:/app/workspace/results
+      - ./python/workspace/temp:/app/workspace/temp
+      # mock 이미지
+      - ./python/mock:/app/mock
+      # CatVTON 모델 가중치 (Real 모드 시 사용)
       - ./python/models:/app/models
-      - ./python/mock:/app/workspace/mock
     depends_on:
       redis:
         condition: service_healthy
