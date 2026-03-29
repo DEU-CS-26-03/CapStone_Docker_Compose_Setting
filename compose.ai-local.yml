@@ -20,8 +20,7 @@ services:
         condition: service_healthy
 
         
-    networks:
-      - capstone-net
+
 
   spring-app:
     depends_on:
@@ -33,3 +32,7 @@ services:
         condition: service_started
     environment:
       PYTHON_SERVICE_URL: http://python-app:8000
+
+networks:
+  capstone-net:
+    driver: bridge
