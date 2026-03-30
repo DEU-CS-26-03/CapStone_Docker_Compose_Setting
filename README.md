@@ -19,7 +19,7 @@
 ## 🚀 Getting Started
 
 1. **Clone the repository**: `git clone https://github.com/[Your-Username]/CapStone_Docker_Compose_Setting.git`
-2. **Configure Environment**: Create a `.env` file in the root directory if environment variables are required for MySQL/Redis.
+2. **Configure Environment**: Create a `.env.example -> .env` file in the root directory if environment variables are required for MySQL/Redis.
 3. **Build and Run**: Execute `docker compose up --build` to orchestrate the Java Spring, Python, and Database containers.
 4. **Verify Services**: Use the health check URLs provided above to ensure all microservices are running correctly.
 
