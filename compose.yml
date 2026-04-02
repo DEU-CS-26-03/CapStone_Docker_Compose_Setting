@@ -31,68 +31,17 @@ services:
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
-    networks:
-      - capstone-net
-    healthcheck:
-      test: ["CMD-SHELL", "redis-cli ping | grep PONG"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
 
   spring-app:
-    build:
-      context: ./spring
-      dockerfile: Dockerfile
-    container_name: capstone-spring
-    restart: unless-stopped
-    depends_on:
-      mariadb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+    # 네 기존 설정 유지
+    volumes:
+      - app_uploads:/data/uploads
+      - app_results:/data/results
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mariadb://mariadb:3306/${MARIA_DATABASE}?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-      SPRING_DATASOURCE_USERNAME: ${MARIA_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MARIA_PASSWORD}
-      SPRING_REDIS_HOST: redis
-      SPRING_REDIS_PORT: 6379
-      PYTHON_SERVICE_URL: ${PYTHON_SERVICE_URL}
-      TZ: Asia/Seoul
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-3600000}
-    expose:
-      - "8080"
-    networks:
-      - capstone-net
-
-  nginx:
-    image: nginx:alpine
-    container_name: capstone-nginx
-    restart: unless-stopped
-    depends_on:
-      - spring-app
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d/app.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./certbot/www:/var/www/certbot:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-    networks:
-      - capstone-net
-
-  certbot:
-    image: certbot/certbot:latest
-    container_name: capstone-certbot
-    volumes:
-      - ./certbot/www:/var/www/certbot
-      - ./certbot/conf:/etc/letsencrypt
-    networks:
-      - capstone-net
+      FILE_UPLOAD_ROOT: /data/uploads
+      FILE_RESULT_ROOT: /data/results
 
 volumes:
   redis_data:
-
-networks:
-  capstone-net:
-    driver: bridge
+  app_uploads:
+  app_results:
