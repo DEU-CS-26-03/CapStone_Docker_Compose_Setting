@@ -19,6 +19,15 @@ spring:
       hibernate:
         format_sql: true
 
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 20MB     # 파일 1개 최대
+      max-request-size: 50MB  # person + garment 합산
+
+file:
+  upload-root: ${FILE_UPLOAD_ROOT:/tmp/uploads}
+  result-root: ${FILE_RESULT_ROOT:/tmp/results}
 
 server:
   port: 8080
