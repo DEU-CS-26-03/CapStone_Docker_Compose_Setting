@@ -9,6 +9,8 @@ services:
       MARIADB_USER: ${MARIA_USER}
       MARIADB_PASSWORD: ${MARIA_PASSWORD}
       TZ: Asia/Seoul
+      # 같은 서버 내부 통신이 아닌 AI 서버 공개 주소로 변경
+      PYTHON_SERVICE_URL: ${AI_SERVER_URL:-http://your-gpu-server-ip:8000}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
