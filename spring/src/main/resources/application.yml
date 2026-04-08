@@ -5,11 +5,10 @@ spring:
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
 
-
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${REDIS_PORT:6379}
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
 
   jpa:
     hibernate:
@@ -29,6 +28,10 @@ spring:
 file:
   upload-root: ${FILE_UPLOAD_ROOT:/tmp/uploads}
   result-root: ${FILE_RESULT_ROOT:/tmp/results}
+  upload:
+    user-images-dir: /app/uploads/user-images
+    garments-dir: /app/uploads/garments
+    results-dir: /app/uploads/results
 
 server:
   port: 8080
@@ -36,7 +39,8 @@ server:
 python:
   service:
     url: ${PYTHON_SERVICE_URL:http://capstone-python:8000}
-
+  inference:
+    base-url: http://localhost:8000  # Python 추론 서버 주소
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-key-here-must-be-long-enough}
   expiration: ${JWT_EXPIRATION:3600000}
