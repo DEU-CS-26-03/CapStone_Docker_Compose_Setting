@@ -1,3 +1,4 @@
+// mariadb 영구 저장 (상태, 결과, 에러 등)
 package com.capstone.tryon.entity;
 
 import jakarta.persistence.*;
