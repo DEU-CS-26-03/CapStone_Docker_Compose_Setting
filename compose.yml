@@ -1,82 +1,80 @@
-  services:
-    mariadb:
-      image: mariadb:10.11
-      container_name: capstone-mariadb
-      restart: unless-stopped
-      env_file:
-        - .env
-      ports:
-        - "${DB_EXTERNAL_PORT}:3306"
-      environment:
-        MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
-        MARIADB_DATABASE: ${MARIADB_DATABASE}
-        MARIADB_USER: ${MARIADB_USER}
-        MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-        TZ: Asia/Seoul
-      command:
-        - --character-set-server=utf8mb4
-        - --collation-server=utf8mb4_unicode_ci
-      volumes:
-        - ./mariadb/data:/var/lib/mysql
-        - ./mariadb/init:/docker-entrypoint-initdb.d
-      networks:
-        - capstone-net
-      healthcheck:
-        test: [ "CMD", "healthcheck.sh", "--connect", "--innodb_initialized" ]
-        interval: 10s
-        timeout: 5s
-        retries: 10
-        start_period: 20s
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: capstone-mariadb
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${DB_EXTERNAL_PORT}:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ${MARIADB_DATABASE}
+      MARIADB_USER: ${MARIADB_USER}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - ./mariadb/data:/var/lib/mysql
+      - ./mariadb/init:/docker-entrypoint-initdb.d
+    networks:
+      - capstone-net
 
-    redis:
-      image: redis:7-alpine
-      container_name: capstone-redis
-      restart: unless-stopped
-      command: redis-server --appendonly yes
-      volumes:
-        - redis_data:/data
-      networks:
-        - capstone-net
+  redis:
+    image: redis:7-alpine
+    container_name: capstone-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - capstone-net
 
-    spring-app:
-      build:
-        context: ./spring
-        dockerfile: Dockerfile
-      container_name: capstone-spring-app
-      restart: unless-stopped
-      depends_on:
-        mariadb:
-          condition: service_healthy
-        redis:
-          condition: service_started
-      env_file:
-        - .env
-      environment:
-        APP_ENV: ${APP_ENV}
-        TRYON_MODE: ${TRYON_MODE}
-        USE_MOCK: ${USE_MOCK}
-        DB_HOST: ${DB_HOST}
-        DB_PORT: ${DB_PORT}
-        REDIS_HOST: ${REDIS_HOST}
-        REDIS_PORT: ${REDIS_PORT}
-        AI_SERVER_URL: ${AI_SERVER_URL}
-        JWT_SECRET: ${JWT_SECRET}
-        JWT_EXPIRATION: ${JWT_EXPIRATION}
-        FILE_UPLOAD_ROOT: /data/uploads
-        FILE_RESULT_ROOT: /data/results
-      # 네 기존 설정 유지
-      volumes:
-        - app_uploads:/data/uploads
-        - app_results:/data/results
-      networks:
-        - capstone-net
+  spring-app:
+    build:
+      context: ./spring
+      dockerfile: Dockerfile
+    container_name: capstone-spring-app
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+      - redis
+    env_file:
+      - .env
+    environment:
+      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL}
+      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      AI_SERVER_URL: ${AI_SERVER_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      APP_ENV: ${APP_ENV}
+      TRYON_MODE: ${TRYON_MODE}
+      USE_MOCK: ${USE_MOCK}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      FILE_UPLOAD_ROOT: ${FILE_UPLOAD_ROOT}
+      FILE_RESULT_ROOT: ${FILE_RESULT_ROOT}
+    ports:
+      - "8080:8080"
+    volumes:
+      - app_uploads:/data/uploads
+      - app_results:/data/results
+    networks:
+      - capstone-net
 
-  volumes:
-    redis_data:
-    app_uploads:
-    app_results:
+volumes:
+  redis_data:
+  app_uploads:
+  app_results:
 
-  networks:
-    capstone-net:
-      driver: bridge
-
+networks:
+  capstone-net:
+    driver: bridge

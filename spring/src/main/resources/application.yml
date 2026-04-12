@@ -1,14 +1,17 @@
 spring:
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://${DB_HOST}:${DB_PORT}/${DB_NAME}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.mariadb.jdbc.Driver}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://${DB_HOST:mariadb}:${DB_PORT:3306}/${DB_NAME:capstone}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USERNAME:capstone}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:capstone}}
 
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
 
   jpa:
     hibernate:
@@ -22,25 +25,34 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 20MB     # 파일 1개 최대
-      max-request-size: 50MB  # person + garment 합산
-
-file:
-  upload-root: ${FILE_UPLOAD_ROOT:/tmp/uploads}
-  result-root: ${FILE_RESULT_ROOT:/tmp/results}
-  upload:
-    user-images-dir: /app/uploads/user-images
-    garments-dir: /app/uploads/garments
-    results-dir: /app/uploads/results
+      max-file-size: 20MB
+      max-request-size: 50MB
 
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+
+app:
+  env: ${APP_ENV:local}
+  frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+
+tryon:
+  mode: ${TRYON_MODE:mock}
+  mock: ${USE_MOCK:true}
+
+file:
+  upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
+  result-root: ${FILE_RESULT_ROOT:/data/results}
+  upload:
+    user-images-dir: ${USER_IMAGES_DIR:/data/uploads/user-images}
+    garments-dir: ${GARMENTS_DIR:/data/uploads/garments}
+    results-dir: ${RESULTS_DIR:/data/results}
 
 python:
   service:
-    url: ${PYTHON_SERVICE_URL:http://capstone-python:8000}
+    url: ${AI_SERVER_URL}
   inference:
-    base-url: http://localhost:8000  # Python 추론 서버 주소
+    base-url: ${AI_SERVER_URL}
+
 jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-key-here-must-be-long-enough}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000}
