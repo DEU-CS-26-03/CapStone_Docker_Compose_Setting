@@ -18,8 +18,8 @@ public class TryonService {
 
     private static final Logger log = LoggerFactory.getLogger(TryonService.class);
 
-    private final TryonJobRepository tryonJobRepository;   // MariaDB - 영구 저장
-    private final JobRedisRepository jobRedisRepository;   // Redis  - 상태 캐시
+    private final TryonJobRepository tryonJobRepository;
+    private final JobRedisRepository jobRedisRepository;
 
     public TryonService(TryonJobRepository tryonJobRepository,
                         JobRedisRepository jobRedisRepository) {
@@ -29,7 +29,6 @@ public class TryonService {
 
     @Transactional
     public TryonResponse create(TryonCreateRequest request) {
-        // MVP: queued / processing 상태 작업이 이미 있으면 409
         Optional<TryonJob> activeJob = tryonJobRepository.findFirstByStatusIn(
                 Arrays.asList("queued", "processing")
         );
@@ -37,7 +36,6 @@ public class TryonService {
             throw new IllegalStateException("ALREADY_ACTIVE");
         }
 
-        // 1. MariaDB에 TryonJob 영구 저장
         String tryonId = "tryon_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
         TryonJob job = new TryonJob();
@@ -49,11 +47,9 @@ public class TryonService {
 
         tryonJobRepository.save(job);
 
-        // 2. Redis에 상태 캐시 저장 (빠른 polling 응답용)
         try {
             jobRedisRepository.save(tryonId, "queued", 0);
         } catch (Exception e) {
-            // Redis 장애 시 DB 저장은 유지 - 로그만 남기고 계속 진행
             log.warn("[Redis] 캐시 저장 실패 (tryonId={}): {}", tryonId, e.getMessage());
         }
 
@@ -63,13 +59,9 @@ public class TryonService {
     }
 
     public TryonResponse getById(String tryonId) {
-
-        // 1차: Redis 캐시 조회
         try {
             String cachedStatus = jobRedisRepository.findStatusById(tryonId);
             if (cachedStatus != null) {
-                // 캐시 히트: DB 조회 없이 Redis 정보로 바로 응답
-                // 단, completed / failed 등 최종 상태는 DB에서 전체 정보 조회
                 if ("queued".equals(cachedStatus) || "processing".equals(cachedStatus)) {
                     Integer cachedProgress = jobRedisRepository.findProgressById(tryonId);
                     return toPartialResponse(tryonId, cachedStatus,
@@ -80,11 +72,9 @@ public class TryonService {
             log.warn("[Redis] 캐시 조회 실패 (tryonId={}): {}", tryonId, e.getMessage());
         }
 
-        // 2차: DB fallback
         TryonJob job = tryonJobRepository.findById(tryonId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 작업을 찾을 수 없습니다: " + tryonId));
 
-        // Redis 캐시 갱신 (DB에서 읽었으니 다시 올려둠)
         try {
             jobRedisRepository.save(tryonId, job.getStatus(), job.getProgress());
         } catch (Exception e) {
@@ -100,7 +90,6 @@ public class TryonService {
         TryonJob job = tryonJobRepository.findById(tryonId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 작업을 찾을 수 없습니다: " + tryonId));
 
-        // MariaDB 업데이트
         job.setStatus(status);
         job.setProgress(progress);
         if (resultId != null) job.setResultId(resultId);
@@ -110,13 +99,10 @@ public class TryonService {
         }
         tryonJobRepository.save(job);
 
-        // Redis 캐시 동기화
         try {
             jobRedisRepository.save(tryonId, status, progress);
-
-            // 최종 상태(completed / failed)는 캐시 TTL 짧게 or 삭제
             if ("completed".equals(status) || "failed".equals(status)) {
-                jobRedisRepository.expire(tryonId, 60); // 60초 후 Redis 캐시 만료
+                jobRedisRepository.expire(tryonId, 60);
             }
         } catch (Exception e) {
             log.warn("[Redis] 상태 동기화 실패 (tryonId={}): {}", tryonId, e.getMessage());
@@ -146,8 +132,16 @@ public class TryonService {
         return job.map(this::toResponse);
     }
 
+    // 문서 경로용 wrapper
+    @Transactional
+    public TryonResponse createJob(TryonCreateRequest request) {
+        return create(request);
+    }
 
-    // DB 전체 정보로 변환
+    public TryonResponse getJob(String tryonId) {
+        return getById(tryonId);
+    }
+
     private TryonResponse toResponse(TryonJob j) {
         TryonResponse res = new TryonResponse();
         res.setTryonId(j.getTryonId());
@@ -165,7 +159,6 @@ public class TryonService {
         return res;
     }
 
-    // Redis 캐시 히트 시 일부 정보로만 응답 (polling 최적화)
     private TryonResponse toPartialResponse(String tryonId, String status, int progress) {
         TryonResponse res = new TryonResponse();
         res.setTryonId(tryonId);

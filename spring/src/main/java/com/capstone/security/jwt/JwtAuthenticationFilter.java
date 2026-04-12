@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -23,9 +24,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        // 로그인/회원가입 등 인증 공개 경로는 JWT 필터를 적용하지 않는다.
         String path = request.getServletPath();
-        return path.startsWith("/api/auth/");
+        String method = request.getMethod();
+
+        return HttpMethod.OPTIONS.matches(method)
+                || path.equals("/api/auth/register")
+                || path.equals("/api/auth/login")
+                || path.equals("/api/v1/health")
+                || path.equals("/api/v1/models/status")
+                || path.startsWith("/error");
     }
 
     @Override

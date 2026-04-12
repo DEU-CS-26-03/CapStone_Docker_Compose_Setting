@@ -23,3 +23,4 @@ public class FileStorageProperties {
     public void setResultRoot(String resultRoot) {
         this.resultRoot = resultRoot;
     }
+}
