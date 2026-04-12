@@ -29,11 +29,13 @@ public class TryonService {
 
     @Transactional
     public TryonResponse create(TryonCreateRequest request) {
+        validateCreateRequest(request);
+
         Optional<TryonJob> activeJob = tryonJobRepository.findFirstByStatusIn(
                 Arrays.asList("queued", "processing")
         );
         if (activeJob.isPresent()) {
-            throw new IllegalStateException("ALREADY_ACTIVE");
+            throw new IllegalStateException("현재 다른 작업이 처리 중입니다.");
         }
 
         String tryonId = "tryon_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -56,6 +58,22 @@ public class TryonService {
         TryonResponse res = toResponse(job);
         res.setMessage("Try-on job created successfully.");
         return res;
+    }
+
+    private void validateCreateRequest(TryonCreateRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("요청 본문이 비어 있습니다.");
+        }
+        if (isBlank(request.getUserImageId())) {
+            throw new IllegalArgumentException("user_image_id는 필수입니다.");
+        }
+        if (isBlank(request.getGarmentId())) {
+            throw new IllegalArgumentException("garment_id는 필수입니다.");
+        }
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
 
     public TryonResponse getById(String tryonId) {
@@ -132,7 +150,6 @@ public class TryonService {
         return job.map(this::toResponse);
     }
 
-    // 문서 경로용 wrapper
     @Transactional
     public TryonResponse createJob(TryonCreateRequest request) {
         return create(request);
