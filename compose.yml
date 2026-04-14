@@ -26,13 +26,29 @@ services:
     image: redis:7-alpine
     container_name: capstone-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    env_file:
+      - .env
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1000"
+      - --requirepass
+      - "${REDIS_PASSWORD}"
     ports:
       - "${REDIS_PORT}:6379"
     volumes:
       - redis_data:/data
     networks:
       - capstone-net
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli -a \"$${REDIS_PASSWORD}\" ping | grep PONG || exit 1" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   spring-app:
     build:
@@ -40,9 +56,11 @@ services:
       dockerfile: Dockerfile
     container_name: capstone-spring-app
     restart: unless-stopped
-    depends_on:
-      - mariadb
-      - redis
+    depends_on:                    # [수정] 단순 시작 순서보다 healthcheck 기준이 더 안전
+      mariadb:
+        condition: service_started
+      redis:
+        condition: service_healthy # [수정] redis가 실제 응답 가능한 뒤 spring 시작
     env_file:
       - .env
     environment:
@@ -52,6 +70,7 @@ services:
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}   # [추가] Spring에서 Redis 인증 사용
       AI_SERVER_URL: ${AI_SERVER_URL}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}

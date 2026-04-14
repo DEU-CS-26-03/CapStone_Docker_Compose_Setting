@@ -12,6 +12,16 @@ spring:
     redis:
       host: ${REDIS_HOST:redis}
       port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}      # [추가] Redis 인증 비밀번호
+      timeout: 3s                       # [추가] 명령/연결 지연 시 너무 오래 물고 있지 않도록 timeout 지정
+      database: 0                       # [추가] 기본 DB 인덱스 명시
+      lettuce:
+        pool:
+          max-active: 8                 # [추가] 최대 활성 커넥션
+          max-idle: 8                   # [추가] 최대 idle 커넥션
+          min-idle: 2                   # [추가] 최소 idle 커넥션
+          max-wait: 3s                  # [추가] 풀에서 커넥션 대기 시간
+        shutdown-timeout: 100ms         # [추가] 종료 시 Lettuce timeout
 
   jpa:
     hibernate:

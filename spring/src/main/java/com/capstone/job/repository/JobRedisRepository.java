@@ -5,6 +5,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.Map;
 
 @Repository
@@ -15,56 +17,83 @@ public class JobRedisRepository {
     private static final String KEY_PREFIX = "job:";
     private static final Duration TTL = Duration.ofHours(1);
 
-    // Job 생성 (최초 저장)
+    // [유지] Job 최초 생성
     public void createJob(String jobId, Long userId) {
         String key = KEY_PREFIX + jobId;
         Map<String, Object> jobData = Map.of(
-                "status", "QUEUED",
-                "userId", userId.toString(),
-                "createdAt", java.time.LocalDateTime.now().toString()
+                "status",    "QUEUED",
+                "userId",    userId.toString(),
+                "createdAt", LocalDateTime.now().toString()
         );
         redisTemplate.opsForHash().putAll(key, jobData);
         redisTemplate.expire(key, TTL);
     }
 
-    // 상태만 업데이트
+    // [수정] updateStatus: updatedAt 타임스탬프 함께 갱신
+    // 기존: status 필드 하나만 put
+    // 변경: status + updatedAt 두 필드를 putAll로 한 번에 저장 (Redis 왕복 1회로 감소)
     public void updateStatus(String jobId, String status) {
         String key = KEY_PREFIX + jobId;
-        redisTemplate.opsForHash().put(key, "status", status);
+        Map<String, Object> fields = Map.of(
+                "status",    status,
+                "updatedAt", LocalDateTime.now().toString()
+        );
+        redisTemplate.opsForHash().putAll(key, fields);
     }
 
-    // 완료 시 결과 URL 저장
+    // [수정] setCompleted: put() 두 번 → putAll() 한 번으로 변경
+    // 기존: opsForHash().put() 두 번 호출 (Redis 왕복 2회)
+    // 변경: putAll()로 status + resultUrl + updatedAt 한 번에 저장 (원자성 보장)
     public void setCompleted(String jobId, String resultUrl) {
         String key = KEY_PREFIX + jobId;
-        redisTemplate.opsForHash().put(key, "status", "COMPLETED");
-        redisTemplate.opsForHash().put(key, "resultUrl", resultUrl);
+        Map<String, Object> fields = Map.of(
+                "status",    "COMPLETED",
+                "resultUrl", resultUrl,
+                "updatedAt", LocalDateTime.now().toString()
+        );
+        redisTemplate.opsForHash().putAll(key, fields);
     }
 
-    // Job 전체 조회
+    // [유지] Job 전체 Hash 조회
     public Map<Object, Object> getJob(String jobId) {
         return redisTemplate.opsForHash().entries(KEY_PREFIX + jobId);
     }
 
-    // 상태만 조회
+    // [유지] 상태만 단건 조회
     public String getStatus(String jobId) {
         Object status = redisTemplate.opsForHash().get(KEY_PREFIX + jobId, "status");
         return status != null ? status.toString() : null;
     }
 
-    // Job 삭제 (수동)
+    // [유지] Job 수동 삭제
     public void deleteJob(String jobId) {
         redisTemplate.delete(KEY_PREFIX + jobId);
     }
 
+    // [추가] Job 존재 여부 확인
+    // TryonService에서 Redis 캐시 히트 판별 시 사용
+    public boolean exists(String jobId) {
+        Boolean hasKey = redisTemplate.hasKey(KEY_PREFIX + jobId);
+        return Boolean.TRUE.equals(hasKey);
+    }
+
     /**
-     * TryonService용 통합 저장 메서드
-     * - status + progress를 Hash에 함께 저장
-     * - Key가 없을 때만 TTL 1시간 신규 설정 (기존 TTL 보호)
+     * [수정] TryonService용 통합 저장 메서드
+     * 기존: opsForHash().put() 두 번 호출 (Redis 왕복 2회)
+     * 변경: Map 빌더 패턴으로 putAll() 한 번에 처리 (원자성 보장)
+     * - Map.of()는 null 값 허용 안 함 → HashMap 사용
      */
     public void save(String jobId, String status, int progress) {
         String key = KEY_PREFIX + jobId;
-        redisTemplate.opsForHash().put(key, "status", status);
-        redisTemplate.opsForHash().put(key, "progress", String.valueOf(progress));
+
+        Map<String, Object> fields = new HashMap<>();
+        fields.put("status",    status);
+        fields.put("progress",  String.valueOf(progress));
+        fields.put("updatedAt", LocalDateTime.now().toString());
+
+        redisTemplate.opsForHash().putAll(key, fields);
+
+        // [유지] TTL: 키가 없거나(-2) TTL이 없는(-1) 경우에만 1시간 신규 설정
         Long expireSeconds = redisTemplate.getExpire(key);
         if (expireSeconds == null || expireSeconds < 0) {
             redisTemplate.expire(key, TTL);
@@ -72,18 +101,16 @@ public class JobRedisRepository {
     }
 
     /**
-     * TryonService 1차 캐시 조회용
-     * - getStatus() 위임으로 단순화 (중복 구현 제거)
-     * - 없으면 null → TryonService에서 DB fallback으로 전환
+     * [유지] TryonService 1차 캐시 조회용 (getStatus 위임)
+     * null 반환 시 TryonService에서 DB fallback으로 전환
      */
     public String findStatusById(String jobId) {
-        return getStatus(jobId); // 기존 메서드 재사용
+        return getStatus(jobId);
     }
 
-
     /**
-     * progress 조회
-     * - 없으면 null 반환 → TryonService에서 0으로 처리됨
+     * [유지] progress 조회
+     * null 반환 시 TryonService에서 0으로 처리
      */
     public Integer findProgressById(String jobId) {
         Object progress = redisTemplate.opsForHash().get(KEY_PREFIX + jobId, "progress");
@@ -96,8 +123,8 @@ public class JobRedisRepository {
     }
 
     /**
-     * TTL 설정 (completed / failed 최종 상태 캐시 만료용)
-     * - TryonService에서 최종 상태 전환 시 짧은 TTL(60초)로 줄여서 자동 정리
+     * [유지] 최종 상태(COMPLETED/FAILED) 전환 시 짧은 TTL로 교체
+     * TryonService에서 호출해 자동 만료 처리
      */
     public void expire(String jobId, long seconds) {
         redisTemplate.expire(KEY_PREFIX + jobId, Duration.ofSeconds(seconds));
