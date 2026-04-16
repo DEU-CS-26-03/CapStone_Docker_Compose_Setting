@@ -33,6 +33,10 @@ public class Garment {
     @Column(name = "partner_brand_key")
     private String partnerBrandKey;
 
+    // ✅ brandKey (partner_brand_key 별칭으로 서비스에서 사용)
+    @Column(name = "brand_key")
+    private String brandKey;
+
     @Column(name = "standard_category_code")
     private String standardCategoryCode;
 
@@ -42,16 +46,30 @@ public class Garment {
     @Column(name = "brand_name")
     private String brandName;
 
+    // ✅ 파일 원본명
+    @Column(name = "filename")
+    private String filename;
+
+    // ✅ MIME 타입
+    @Column(name = "content_type")
+    private String contentType;
+
     private BigDecimal price;
     private String currency;
 
     @Column(name = "file_url")
-    private String fileUrl;          // ← getFileUrl() 여기서 나옴
+    private String fileUrl;
 
     @Column(name = "thumbnail_url")
     private String thumbnailUrl;
 
+    @Column(name = "mask_url")
+    private String maskUrl;
+
     private String status;
+
+    @Column(name = "metadata_json", columnDefinition = "JSON")
+    private String metadataJson;
 
     @Builder.Default
     private boolean deleted = false;
@@ -63,4 +81,7 @@ public class Garment {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private OffsetDateTime updatedAt;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 }

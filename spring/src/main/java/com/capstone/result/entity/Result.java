@@ -19,6 +19,10 @@ public class Result {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // ✅ 외부 노출용 결과 ID (UUID 등)
+    @Column(name = "result_id", unique = true)
+    private String resultId;
+
     @Column(name = "tryon_id")
     private String tryonId;
 
@@ -30,6 +34,17 @@ public class Result {
 
     @Column(name = "result_thumbnail_url")
     private String resultThumbnailUrl;
+
+    @Column(name = "storage_path")
+    private String storagePath;
+
+    // ✅ AI 생성 소요 시간 (ms)
+    @Column(name = "generation_ms")
+    private Integer generationMs;
+
+    // ✅ 피팅 당시 의류 카테고리 스냅샷
+    @Column(name = "garment_category")
+    private String garmentCategory;
 
     private int rating;
     private String comment;

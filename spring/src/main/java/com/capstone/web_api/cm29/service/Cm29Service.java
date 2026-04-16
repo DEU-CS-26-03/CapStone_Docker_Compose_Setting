@@ -1,6 +1,6 @@
 package com.capstone.web_api.cm29.service;
 
-import com.capstone.web_api.cm29.client.NaverShoppingApiClient;
+import com.capstone.web_api.naver.client.NaverShoppingApiClient;
 import com.capstone.web_api.cm29.dto.*;
 import com.capstone.garment.dto.GarmentResponse;
 import com.capstone.garment.entity.Garment;
