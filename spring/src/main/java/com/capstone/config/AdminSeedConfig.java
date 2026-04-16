@@ -23,16 +23,15 @@ public class AdminSeedConfig {
             String adminEmail = "admin@test.com";
 
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
-                User admin = User.builder()
-                        .email(adminEmail)
-                        .passwordHash(passwordEncoder.encode("Admin1234!"))
-                        .nickname("관리자")
-                        .role(UserRole.ADMIN)
-                        .status(UserStatus.ACTIVE)
-                        .build();
+                User admin = new User();
+                admin.setEmail(adminEmail);
+                admin.setPasswordHash(passwordEncoder.encode("Admin1234!"));
+                admin.setNickname("관리자");
+                admin.setRole(UserRole.ADMIN);
+                admin.setStatus(UserStatus.ACTIVE);
 
                 userRepository.save(admin);
-                System.out.println("[AdminSeed] 관리자 계정 생성 완료: " + adminEmail);
+                System.out.println("[Seed] 관리자 계정 생성 완료: " + adminEmail);
             }
         };
     }

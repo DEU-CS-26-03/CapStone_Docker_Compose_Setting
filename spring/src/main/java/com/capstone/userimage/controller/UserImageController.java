@@ -1,4 +1,3 @@
-//POST /user-images, GET /user-images/{id}
 package com.capstone.userimage.controller;
 
 import com.capstone.userimage.dto.UserImageResponse;
@@ -8,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/user-images")
@@ -19,30 +19,22 @@ public class UserImageController {
         this.service = service;
     }
 
-    /**
-     * POST /api/v1/user-images
-     * 사용자 전신 사진 업로드
-     * - Content-Type: multipart/form-data
-     * - file: 이미지 파일 (jpg, png만 허용)
-     * - view: 촬영 방향 (현재 front만 허용, 기본값 front)
-     */
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<UserImageResponse> upload(
             @RequestPart("file") MultipartFile file,
             @RequestParam(value = "view", defaultValue = "front") String view
     ) throws IOException {
-        UserImageResponse response = service.upload(file, view);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(service.upload(file, view));
     }
 
-    /**
-     * GET /api/v1/user-images/{id}
-     * 업로드된 사용자 사진 메타정보 조회
-     */
     @GetMapping("/{id}")
-    public ResponseEntity<UserImageResponse> getById(
-            @PathVariable("id") String imageId
-    ) {
+    public ResponseEntity<UserImageResponse> getById(@PathVariable("id") String imageId) {
         return ResponseEntity.ok(service.getById(imageId));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> delete(@PathVariable("id") String imageId) {
+        service.softDelete(imageId);
+        return ResponseEntity.ok(Map.of("message", "이미지가 삭제되었습니다."));
     }
 }
