@@ -1,4 +1,4 @@
-package com.capstone.user.service;
+package com.capstone.user.dto;
 
 import com.capstone.user.entity.User;
 import lombok.Getter;
