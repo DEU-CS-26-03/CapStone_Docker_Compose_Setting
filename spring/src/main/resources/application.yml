@@ -61,10 +61,10 @@ file:
     results-dir: ${RESULTS_DIR:/data/results}
 
 python:
-  service:
-    url: ${AI_SERVER_URL}
   inference:
-    base-url: ${AI_SERVER_URL}
+    base-url: ${AI_SERVER_URL:https://xxxx.ngrok-free.app}
+    connect-timeout-ms: 3000
+    read-timeout-ms: 180000
 
 jwt:
   secret: ${JWT_SECRET}

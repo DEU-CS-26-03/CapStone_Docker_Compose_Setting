@@ -1,3 +1,4 @@
+// src/main/java/com/capstone/tryon/entity/TryonJob.java
 package com.capstone.tryon.entity;
 
 import jakarta.persistence.*;
@@ -41,10 +42,13 @@ public class TryonJob {
     @Column(name = "result_id")
     private String resultId;
 
+    @Column(name = "result_image_url")       // ← 추가: Python 결과 이미지 URL 저장
+    private String resultImageUrl;
+
     @Column(name = "error_code")
     private String errorCode;
 
-    @Column(name = "error_message")
+    @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
     @Column(name = "deleted")

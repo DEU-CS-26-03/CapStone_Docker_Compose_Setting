@@ -1,3 +1,4 @@
+// src/main/java/com/capstone/tryon/dto/TryonResponse.java
 package com.capstone.tryon.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,6 +25,9 @@ public class TryonResponse {
 
     @JsonProperty("result_id")
     private String resultId;
+
+    @JsonProperty("result_image_url")        // ← 추가: 프론트 polling 응답에 이미지 URL 포함
+    private String resultImageUrl;
 
     private String message;
     private TryonErrorInfo error;
