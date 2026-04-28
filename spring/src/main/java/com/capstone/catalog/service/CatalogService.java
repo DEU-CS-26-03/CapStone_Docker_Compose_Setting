@@ -17,7 +17,6 @@ import java.util.stream.Stream;
 public class CatalogService {
 
     private final GarmentRepository garmentRepository;
-    // NaverShoppingApiClient 제거 — catalog/provider가 담당
 
     // ── 표준 카테고리 ────────────────────────────────────────────
     public List<CategoryResponse> getStandardCategories() {
@@ -68,7 +67,7 @@ public class CatalogService {
                 .orElseThrow(() -> new IllegalArgumentException("카테고리 없음: " + code));
     }
 
-    // ── 브랜드 (DB 없으면 Mock, 나중에 Brand 엔티티 추가 권장) ──
+    // ── 브랜드 (Mock — 추후 Brand 엔티티 추가 권장) ─────────────
     public List<BrandResponse> getBrands() {
         return List.of(
                 new BrandResponse("brand_nike",    "Nike",        "나이키"),
@@ -86,27 +85,18 @@ public class CatalogService {
                 .orElseThrow(() -> new IllegalArgumentException("브랜드 없음: " + brandKey));
     }
 
-    // ── DB 기반 상품 검색 (GarmentService.list()와 동일 로직 재사용) ──
+    // ── DB 기반 상품 검색 — findAll() 대신 JPQL 쿼리 사용 ────────
     public List<GarmentResponse> searchItems(
             String q, String category, String brandKey, String sourceType) {
-        return garmentRepository.findAll().stream()
-                .filter(g -> !"DELETED".equals(g.getStatus()) && !"HIDDEN".equals(g.getStatus()))
-                .filter(g -> category   == null || category.isBlank()
-                        || category.equalsIgnoreCase(g.getCategory()))
-                .filter(g -> brandKey   == null || brandKey.isBlank()
-                        || brandKey.equals(g.getBrandKey()))
-                .filter(g -> sourceType == null || sourceType.isBlank()
-                        || sourceType.equals(g.getSourceType()))
-                .filter(g -> q == null || q.isBlank()
-                        || (g.getName() != null && g.getName().toLowerCase().contains(q.toLowerCase()))
-                        || (g.getFilename() != null && g.getFilename().toLowerCase().contains(q.toLowerCase())))
+        return garmentRepository.searchGarments(q, category, sourceType, brandKey)
+                .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
     }
 
     // ── 상품 단건 조회 ───────────────────────────────────────────
     public GarmentResponse getItemById(String itemId) {
-        return garmentRepository.findById(itemId)
+        return garmentRepository.findById(itemId)   // String PK — 정상 동작
                 .map(this::toResponse)
                 .orElseThrow(() -> new IllegalArgumentException("상품 없음: " + itemId));
     }
@@ -121,15 +111,14 @@ public class CatalogService {
             throw new IllegalStateException("이미 import된 상품: " + itemKey);
         });
 
-        // 현재는 itemKey로 수동 등록 — 추후 Naver API 연결 시 여기서 호출
-        Garment garment = new Garment();
-        garment.setGarmentId("gar_import_" + itemKey);
-        garment.setSourceType("IMPORT");
-        garment.setExternalItemKey(itemKey);
-        garment.setStatus("ACTIVE");
+        Garment garment = Garment.builder()
+                .garmentId("gar_import_" + itemKey)
+                .sourceType("IMPORT")
+                .externalItemKey(itemKey)
+                .status("ACTIVE")
+                .build();
 
-        Garment saved = garmentRepository.save(garment);
-        return toResponse(saved);
+        return toResponse(garmentRepository.save(garment));
     }
 
     private GarmentResponse toResponse(Garment g) {
