@@ -80,16 +80,20 @@ public class GarmentService {
 
     @Transactional(readOnly = true)
     public List<GarmentResponse> list(String q, String category, String sourceType, String brandKey) {
-        List<Garment> result = repository.findAll().stream()
-                .filter(g -> !"DELETED".equals(g.getStatus()) && !"HIDDEN".equals(g.getStatus()))
-                .filter(g -> category == null   || category.isBlank()   || category.equals(g.getCategory()))
-                .filter(g -> sourceType == null || sourceType.isBlank() || sourceType.equals(g.getSourceType()))
-                .filter(g -> brandKey == null   || brandKey.isBlank()   || brandKey.equals(g.getBrandKey()))
-                .filter(g -> q == null          || q.isBlank()          ||
-                        (g.getFilename() != null && g.getFilename().toLowerCase().contains(q.toLowerCase())))
+        return repository.searchGarments(
+                        blankToNull(q),
+                        blankToNull(category),
+                        blankToNull(sourceType),
+                        blankToNull(brandKey)
+                )
+                .stream()
+                .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
 
-        return result.stream().map(this::toResponse).collect(Collectors.toList());
+    // 빈 문자열은 null로 처리해 JPQL의 :param IS NULL 조건이 제대로 작동하도록
+    private String blankToNull(String s) {
+        return (s == null || s.isBlank()) ? null : s;
     }
 
     @Transactional(readOnly = true)

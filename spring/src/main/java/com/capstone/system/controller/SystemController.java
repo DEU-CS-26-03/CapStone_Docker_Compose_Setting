@@ -1,4 +1,3 @@
-// Health & Model Status
 package com.capstone.system.controller;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +19,7 @@ public class SystemController {
     private final RestTemplate restTemplate;
 
     @Value("${python.inference.base-url}")
-    private String pythonBaseUrl;
+    private String pythonInferenceBaseUrl;
 
     public SystemController(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
