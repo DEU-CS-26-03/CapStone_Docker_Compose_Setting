@@ -19,7 +19,7 @@ public class Garment {
 
     @Id
     @Column(name = "garment_id")
-    private String garmentId;
+    private Long garmentId;
 
     @Column(name = "owner_user_id")
     private Long ownerUserId;

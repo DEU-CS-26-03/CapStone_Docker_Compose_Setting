@@ -10,7 +10,15 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface GarmentRepository extends JpaRepository<Garment, Long> {
+public interface GarmentRepository extends JpaRepository<Garment, String> { // ID 타입 맞게 조정
+
+    // ResultService에서 필요
+    List<Garment> findTop10ByCategoryAndStatusOrderByCreatedAtDesc(String category, String status);
+    List<Garment> findTop10ByStatusAndCategoryNotOrderByCreatedAtDesc(String status, String category);
+    List<Garment> findTop10ByStatusOrderByCreatedAtDesc(String status);
+
+    // CatalogService에서 필요
+    Optional<Garment> findByExternalItemKey(String externalItemKey);
 
     @Query("""
         SELECT g FROM Garment g
