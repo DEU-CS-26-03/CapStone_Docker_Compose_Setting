@@ -132,7 +132,7 @@ public class GarmentService {
 
     private GarmentResponse toResponse(Garment e) {
         return new GarmentResponse(
-                e.getGarmentId(),
+                String.valueOf(e.getGarmentId()),
                 e.getStatus(),
                 e.getSourceType(),
                 e.getCategory(),

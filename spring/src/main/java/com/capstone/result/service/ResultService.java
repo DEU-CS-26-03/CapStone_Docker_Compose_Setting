@@ -122,7 +122,7 @@ public class ResultService {
 
     private GarmentResponse toGarmentResponse(Garment g) {
         return new GarmentResponse(
-                g.getGarmentId(), g.getStatus(), g.getSourceType(),
+                String.valueOf(g.getGarmentId()), g.getStatus(), g.getSourceType(),
                 g.getCategory(), g.getFilename(), g.getContentType(),
                 g.getFileUrl(), g.getBrandKey(), g.getCreatedAt()
         );

@@ -33,7 +33,7 @@ public class FavoriteService {
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "의류를 찾을 수 없습니다: " + fav.getGarmentId()));
                     return new FavoriteResponse(
-                            g.getGarmentId(), g.getStatus(), g.getSourceType(),
+                            String.valueOf(g.getGarmentId()), g.getStatus(), g.getSourceType(),
                             g.getCategory(), g.getFilename(), g.getFileUrl(),
                             g.getBrandKey(), fav.getCreatedAt()
                     );

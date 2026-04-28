@@ -112,7 +112,7 @@ public class CatalogService {
         });
 
         Garment garment = Garment.builder()
-                .garmentId("gar_import_" + itemKey)
+                .garmentId(Long.parseLong(itemKey))
                 .sourceType("IMPORT")
                 .externalItemKey(itemKey)
                 .status("ACTIVE")
@@ -123,7 +123,7 @@ public class CatalogService {
 
     private GarmentResponse toResponse(Garment g) {
         return new GarmentResponse(
-                g.getGarmentId(),
+                String.valueOf(g.getGarmentId()),
                 g.getStatus(),
                 g.getSourceType(),
                 g.getCategory(),

@@ -37,7 +37,8 @@ public class SystemController {
     @GetMapping({"/models/status", "/model/health"})
     public ResponseEntity<?> modelStatus() {
         try {
-            String url = pythonBaseUrl + "/v1/models/status";
+
+            String url = pythonInferenceBaseUrl + "/v1/models/status";
             Map<?, ?> response = restTemplate.getForObject(url, Map.class);
 
             if (response == null) {
