@@ -1,1 +1,1 @@
-// src/main/java/com/capstone/python/CatVtonClient.javapackage com.capstone.python;import com.capstone.python.dto.PythonInferRequest;import com.capstone.python.dto.PythonInferResponse;public interface CatVtonClient {    PythonInferResponse infer(PythonInferRequest request);}
+package com.capstone.tryon.python;import com.capstone.tryon.python.dto.PythonInferRequest;import com.capstone.tryon.python.dto.PythonInferResponse;public interface CatVtonClient {    PythonInferResponse infer(PythonInferRequest request);}

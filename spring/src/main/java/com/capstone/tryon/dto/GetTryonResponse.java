@@ -1,5 +1,6 @@
 package com.capstone.tryon.dto;
 
+import com.capstone.tryon.domain.TryonStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,19 +11,14 @@ import java.time.OffsetDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TryonResponse {
+public class GetTryonResponse {
 
     @JsonProperty("tryon_id")
     private String tryonId;
 
-    private String status;
+    private TryonStatus status;
+
     private int progress;
-
-    @JsonProperty("user_image_id")
-    private String userImageId;
-
-    @JsonProperty("garment_id")
-    private String garmentId;
 
     @JsonProperty("result_id")
     private String resultId;
@@ -31,7 +27,6 @@ public class TryonResponse {
     private String resultImageUrl;
 
     private String message;
-    private TryonErrorInfo error;
 
     @JsonProperty("created_at")
     private OffsetDateTime createdAt;

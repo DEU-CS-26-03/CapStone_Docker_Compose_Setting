@@ -1,10 +1,9 @@
-// src/main/java/com/capstone/tryon/service/TryonService.java
 package com.capstone.tryon.service;
 
 import com.capstone.job.repository.JobRedisRepository;
-import com.capstone.python.CatVtonClient;
-import com.capstone.python.dto.PythonInferRequest;
-import com.capstone.python.dto.PythonInferResponse;
+import com.capstone.tryon.python.CatVtonClient;
+import com.capstone.tryon.python.dto.PythonInferRequest;
+import com.capstone.tryon.python.dto.PythonInferResponse;
 import com.capstone.tryon.dto.TryonCreateRequest;
 import com.capstone.tryon.dto.TryonErrorInfo;
 import com.capstone.tryon.dto.TryonResponse;
@@ -31,15 +30,12 @@ public class TryonService {
     private final TryonJobRepository tryonJobRepository;
     private final JobRedisRepository jobRedisRepository;
     private final UserRepository userRepository;
-    private final CatVtonClient catVtonClient;           // ← 추가
+    private final CatVtonClient catVtonClient;
 
-    // ─────────────────────────────────────────────────
-    // POST /api/v1/tryons  — 작업 생성 + Python 비동기 호출
-    // ─────────────────────────────────────────────────
     @Transactional
     public TryonResponse create(TryonCreateRequest request, String email) {
-        if (request.getGarmentId() == null && request.getExternalItemKey() == null) {
-            throw new IllegalArgumentException("garmentId 또는 externalItemKey 중 하나는 필수입니다.");
+        if (request.getGarmentId() == null && request.getExternalItemId() == null) {
+            throw new IllegalArgumentException("garmentId 또는 externalItemId 중 하나는 필수입니다.");
         }
 
         User user = userRepository.findByEmail(email)
@@ -54,7 +50,7 @@ public class TryonService {
         job.setProgress(0);
         job.setUserImageId(request.getUserImageId());
         job.setGarmentId(request.getGarmentId());
-        job.setExternalItemKey(request.getExternalItemKey());
+        job.setExternalItemKey(request.getExternalItemId());
         tryonJobRepository.save(job);
 
         try {
@@ -63,7 +59,6 @@ public class TryonService {
             log.warn("[Redis] 캐시 저장 실패 (tryonId={}): {}", tryonId, e.getMessage());
         }
 
-        // ← 추가: 트랜잭션 커밋 후 비동기로 Python 호출
         processTryonAsync(tryonId, request.getUserImageId(), request.getGarmentId());
 
         TryonResponse res = toResponse(job);
@@ -71,30 +66,20 @@ public class TryonService {
         return res;
     }
 
-    // ─────────────────────────────────────────────────
-    // Python /infer 비동기 호출 — queued → processing → completed/failed
-    // ─────────────────────────────────────────────────
-    @Async                                               // ← 추가: AsyncConfig 필요 (아래 참고)
+    @Async
     public void processTryonAsync(String tryonId, String userImageId, String garmentId) {
         try {
-            // 1. processing 전환
             updateStatusInNewTx(tryonId, "processing", 10, null, null, null);
 
-            // 2. userImageId, garmentId → Python에 넘길 URL 조회
-            //    현재 UserImage, Garment 엔티티가 없으므로 userImageId를 직접 URL로 사용
-            //    → 2순위 이미지 업로드 API 완성 후 fileUrl 조회로 교체 예정
-            String userImageUrl  = resolveImageUrl(userImageId);
-            String garmentUrl    = resolveGarmentUrl(garmentId);
+            String userImageUrl = resolveImageUrl(userImageId);
+            String garmentUrl = resolveGarmentUrl(garmentId);
 
-            // 3. Python POST /infer 호출
-            PythonInferResponse response = catVtonClient.infer(
-                    PythonInferRequest.builder()
-                            .userImagePath(userImageUrl)
-                            .garmentImagePath(garmentUrl)
-                            .build()
-            );
+            PythonInferRequest inferRequest = new PythonInferRequest();
+            inferRequest.setPersonImageUrl(userImageUrl);
+            inferRequest.setGarmentImageUrl(garmentUrl);
 
-            // 4. 결과 저장 → completed
+            PythonInferResponse response = catVtonClient.infer(inferRequest);
+
             String resultId = "result_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
             updateStatusWithResultInNewTx(tryonId, resultId, response.getResultImageUrl());
 
@@ -104,9 +89,6 @@ public class TryonService {
         }
     }
 
-    // ─────────────────────────────────────────────────
-    // 상태 갱신 — 별도 트랜잭션 (async 메서드와 트랜잭션 분리)
-    // ─────────────────────────────────────────────────
     @Transactional
     public void updateStatusInNewTx(String tryonId, String status, int progress,
                                     String resultId, String errorCode, String errorMessage) {
@@ -138,7 +120,7 @@ public class TryonService {
         job.setStatus("completed");
         job.setProgress(100);
         job.setResultId(resultId);
-        job.setResultImageUrl(resultImageUrl);           // ← 추가 필드
+        job.setResultImageUrl(resultImageUrl);
         tryonJobRepository.save(job);
 
         try {
@@ -149,22 +131,14 @@ public class TryonService {
         }
     }
 
-    // ─────────────────────────────────────────────────
-    // URL 해석 헬퍼 — 2순위 완성 후 DB 조회로 교체
-    // ─────────────────────────────────────────────────
     private String resolveImageUrl(String userImageId) {
-        // TODO: 2순위 UserImage 엔티티 완성 후 → userImageRepository.findById(userImageId).getFileUrl()
-        return userImageId;   // 현재는 클라이언트가 직접 URL을 userImageId에 담아 보내는 임시 방식
+        return userImageId;
     }
 
     private String resolveGarmentUrl(String garmentId) {
-        // TODO: 2순위 Garment 엔티티 완성 후 → garmentRepository.findById(garmentId).getFileUrl()
-        return garmentId;     // 동일
+        return garmentId;
     }
 
-    // ─────────────────────────────────────────────────
-    // 나머지 기존 메서드 — 패키지 import만 변경, 로직 동일
-    // ─────────────────────────────────────────────────
     @Transactional(readOnly = true)
     public List<TryonResponse> listByUser(String email) {
         User user = userRepository.findByEmail(email)
@@ -252,7 +226,7 @@ public class TryonService {
         res.setUserImageId(j.getUserImageId());
         res.setGarmentId(j.getGarmentId());
         res.setResultId(j.getResultId());
-        res.setResultImageUrl(j.getResultImageUrl());    // ← 추가
+        res.setResultImageUrl(j.getResultImageUrl());
         res.setCreatedAt(j.getCreatedAt());
         res.setUpdatedAt(j.getUpdatedAt());
         if (j.getErrorCode() != null) {

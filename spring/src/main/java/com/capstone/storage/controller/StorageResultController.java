@@ -1,4 +1,4 @@
-package com.capstone.result.controller;
+package com.capstone.storage.controller;
 
 import com.capstone.result.dto.FeedbackRequest;
 import com.capstone.result.dto.FeedbackResponse;
@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/results")
 @RequiredArgsConstructor
-public class ResultController {
+public class StorageResultController {
 
     private final ResultService service;
 

@@ -1,5 +1,4 @@
-// src/main/java/com/capstone/python/dto/PythonInferResponse.java
-package com.capstone.python.dto;
+package com.capstone.tryon.python.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
@@ -10,6 +9,7 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 public class PythonInferResponse {
+
     @JsonProperty("result_image_url")
     private String resultImageUrl;
 

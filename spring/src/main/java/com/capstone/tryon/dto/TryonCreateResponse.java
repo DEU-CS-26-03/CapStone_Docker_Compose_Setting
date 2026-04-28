@@ -1,5 +1,6 @@
 package com.capstone.tryon.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,12 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class TryonErrorInfo {
-    private String code;
+public class TryonCreateResponse {
+
+    @JsonProperty("tryon_id")
+    private String tryonId;
+
+    private String status;
+    private int progress;
     private String message;
 }

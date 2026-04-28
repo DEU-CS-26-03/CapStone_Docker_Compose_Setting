@@ -1,5 +1,4 @@
-// src/main/java/com/capstone/python/config/PythonProperties.java
-package com.capstone.python.config;
+package com.capstone.tryon.config;
 
 import lombok.Getter;
 import lombok.Setter;

@@ -1,16 +1,18 @@
-// src/main/java/com/capstone/python/dto/PythonInferRequest.java
-package com.capstone.python.dto;
+package com.capstone.tryon.python.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
-@Builder
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class PythonInferRequest {
-    private String userImagePath;       // 유저 이미지 URL 또는 로컬 경로
-    private String garmentImagePath;    // 의류 이미지 URL 또는 로컬 경로
+
+    @JsonProperty("person_image_url")
+    private String personImageUrl;
+
+    @JsonProperty("garment_image_url")
+    private String garmentImageUrl;
 }

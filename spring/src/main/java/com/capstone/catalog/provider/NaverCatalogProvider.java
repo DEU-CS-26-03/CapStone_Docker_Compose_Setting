@@ -2,9 +2,9 @@ package com.capstone.catalog.provider;
 
 import com.capstone.catalog.dto.CatalogItemDto;
 import com.capstone.catalog.dto.CatalogSearchResponse;
+import com.capstone.catalog.dto.NaverShopSearchResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -18,10 +18,10 @@ public class NaverCatalogProvider implements CatalogProvider {
 
     private final RestClient restClient = RestClient.create();
 
-    @Value("${external.naver.client-id}")
+    @Value("${external.naver.client-id:}")
     private String clientId;
 
-    @Value("${external.naver.client-secret}")
+    @Value("${external.naver.client-secret:}")
     private String clientSecret;
 
     @Override
