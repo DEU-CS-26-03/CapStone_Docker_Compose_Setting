@@ -19,7 +19,7 @@ public class Garment {
 
     @Id
     @Column(name = "garment_id")
-    private Long garmentId;
+    private String garmentId;
 
     @Column(name = "owner_user_id")
     private Long ownerUserId;
@@ -33,7 +33,6 @@ public class Garment {
     @Column(name = "partner_brand_key")
     private String partnerBrandKey;
 
-    // ✅ brandKey (partner_brand_key 별칭으로 서비스에서 사용)
     @Column(name = "brand_key")
     private String brandKey;
 
@@ -46,11 +45,9 @@ public class Garment {
     @Column(name = "brand_name")
     private String brandName;
 
-    // ✅ 파일 원본명
     @Column(name = "filename")
     private String filename;
 
-    // ✅ MIME 타입
     @Column(name = "content_type")
     private String contentType;
 
