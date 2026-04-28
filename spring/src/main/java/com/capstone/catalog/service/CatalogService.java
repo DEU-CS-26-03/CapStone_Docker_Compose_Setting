@@ -112,7 +112,7 @@ public class CatalogService {
         });
 
         Garment garment = Garment.builder()
-                .garmentId(Long.parseLong(itemKey))
+                .garmentId(itemKey)
                 .sourceType("IMPORT")
                 .externalItemKey(itemKey)
                 .status("ACTIVE")
