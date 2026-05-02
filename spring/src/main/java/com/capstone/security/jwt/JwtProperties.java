@@ -6,9 +6,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 @Getter
-@Builder          // builder() 필요한 경우
-@NoArgsConstructor
-@AllArgsConstructor
+@Setter
 @Component
 @ConfigurationProperties(prefix = "jwt")
 public class JwtProperties {
