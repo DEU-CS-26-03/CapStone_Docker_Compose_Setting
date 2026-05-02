@@ -28,7 +28,6 @@ public class TryonController {
      * - clothImage  : 의상 이미지 파일
      * - clothType   : upper / lower / overall (선택, 기본 upper)
      */
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TryonResponse> create(
