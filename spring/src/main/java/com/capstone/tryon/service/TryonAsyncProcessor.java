@@ -1,4 +1,3 @@
-// com/capstone/tryon/service/TryonAsyncProcessor.java
 package com.capstone.tryon.service;
 
 import com.capstone.tryon.python.CatVtonClient;
@@ -32,21 +31,36 @@ public class TryonAsyncProcessor {
         try {
             tryonService.updateStatusInNewTx(tryonId, "PROCESSING", 10, null, null, null);
 
-            // 1. Python 호출 → byte[] 수신
-            byte[] resultBytes = catVtonClient.inferWithFiles(personPath, clothPath, clothType);
+            // STEP 1: Python에 추론 작업 제출 → pythonJobId 수신
+            String pythonJobId = catVtonClient.submitJob(personPath, clothPath, clothType);
+            log.info("[Async] tryonId={} pythonJobId={} 제출 완료", tryonId, pythonJobId);
 
-            // 2. Ubuntu 파일시스템에 저장
+            // STEP 2: DONE 될 때까지 polling (5초 간격, 최대 10분)
+            String pythonStatus = "";
+            for (int i = 0; i < 120; i++) {
+                Thread.sleep(5000);
+                pythonStatus = catVtonClient.pollJobStatus(pythonJobId);
+                log.info("[Async] tryonId={} pythonJobId={} status={}", tryonId, pythonJobId, pythonStatus);
+
+                if ("DONE".equals(pythonStatus))   break;
+                if ("FAILED".equals(pythonStatus)) throw new RuntimeException("Python 추론 실패: jobId=" + pythonJobId);
+            }
+            if (!"DONE".equals(pythonStatus)) {
+                throw new RuntimeException("Python 추론 타임아웃: jobId=" + pythonJobId);
+            }
+
+            // STEP 3: 결과 이미지 byte[] 수신 → Ubuntu에 저장
+            byte[] resultBytes = catVtonClient.fetchResultImage(pythonJobId);
             String resultFileName = tryonId + "_result.jpg";
             Path resultFilePath = Paths.get(resultRoot, resultFileName);
             Files.createDirectories(resultFilePath.getParent());
             Files.write(resultFilePath, resultBytes);
 
-            // 3. DB에 URL 기록 + COMPLETED
+            // STEP 4: DB resultImageUrl 기록 + COMPLETED
             String resultImageUrl = baseUrl + "/uploads/results/" + resultFileName;
             String resultId = "result_" + tryonId.substring(0, 8);
-
             tryonService.updateStatusWithResultInNewTx(tryonId, resultId, resultImageUrl);
-            log.info("[Async] tryonId={} 완료, url={}", tryonId, resultImageUrl);
+            log.info("[Async] tryonId={} 완료 url={}", tryonId, resultImageUrl);
 
         } catch (Exception e) {
             log.error("[Async] tryonId={} 실패", tryonId, e);
