@@ -5,13 +5,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 @Getter
 @Setter
 @NoArgsConstructor
 public class TryonCreateRequest {
 
-    @NotBlank(message = "userImageId는 필수입니다.")
     @JsonProperty("user_image_id")
     private String userImageId;
 
@@ -20,4 +20,8 @@ public class TryonCreateRequest {
 
     @JsonProperty("external_item_id")
     private String externalItemId;
+
+    private MultipartFile personImage;
+    private MultipartFile clothImage;
+    private String clothType = "upper"; // 기본값
 }

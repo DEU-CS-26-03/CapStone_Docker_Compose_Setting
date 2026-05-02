@@ -8,13 +8,13 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.OffsetDateTime;
 
-@Entity
-@Table(name = "tryon_jobs")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Entity
+@Table(name = "tryon_jobs")
 public class TryonJob {
 
     @Id

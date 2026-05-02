@@ -37,34 +37,25 @@ public class SystemController {
     @GetMapping({"/models/status", "/model/health"})
     public ResponseEntity<?> modelStatus() {
         try {
-
-            String url = pythonInferenceBaseUrl + "/v1/models/status";
+            // RestTemplate에 인터셉터가 있으므로 헤더 별도 설정 불필요
+            String url = pythonInferenceBaseUrl + "/health";  // /v1/models/status → /health 로 수정
             Map<?, ?> response = restTemplate.getForObject(url, Map.class);
 
             if (response == null) {
                 return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
                         "model_name", "CatVTON",
                         "loaded", false,
-                        "device", "unknown",
-                        "busy", false,
                         "error", "추론 서버 응답이 비어 있습니다."
                 ));
             }
 
-            Object loadedValue = response.get("loaded");
-            boolean loaded = loadedValue instanceof Boolean && (Boolean) loadedValue;
-
-            return ResponseEntity
-                    .status(loaded ? HttpStatus.OK : HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(response);
+            return ResponseEntity.ok(response);
 
         } catch (RestClientException e) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(Map.of(
                     "model_name", "CatVTON",
                     "loaded", false,
-                    "device", "unknown",
-                    "busy", false,
-                    "error", "추론 서버에 연결할 수 없습니다."
+                    "error", "추론 서버에 연결할 수 없습니다: " + e.getMessage()
             ));
         }
     }

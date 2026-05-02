@@ -4,7 +4,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PresignRequest {
     private String fileName;
     private String contentType;

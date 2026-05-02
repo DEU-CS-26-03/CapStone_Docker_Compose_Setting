@@ -6,14 +6,15 @@ import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-public class StaticResourceConfig implements WebMvcConfigurer {
+public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Value("${app.upload.dir}")
-    private String uploadDir;
+    @Value("${app.file.result-root:/data/results}")
+    private String resultRoot;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + uploadDir + "/");
+        // /uploads/results/** → Ubuntu 실제 경로 매핑
+        registry.addResourceHandler("/uploads/results/**")
+                .addResourceLocations("file:" + resultRoot + "/");
     }
 }

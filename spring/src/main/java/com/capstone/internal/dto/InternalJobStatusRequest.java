@@ -5,7 +5,9 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class InternalJobStatusRequest {
 
     private String status;

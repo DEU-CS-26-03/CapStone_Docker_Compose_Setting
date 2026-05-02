@@ -5,6 +5,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class PresignResponse {
     private String uploadUrl;
     private String uploadToken;

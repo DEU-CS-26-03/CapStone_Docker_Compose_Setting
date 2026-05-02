@@ -16,6 +16,7 @@ public class CatVtonWebClient implements CatVtonClient {
     public PythonInferResponse infer(PythonInferRequest request) {
         return restClient.post()
                 .uri("/infer")
+                .header("ngrok-skip-browser-warning", "true")  // ← 추가
                 .body(request)
                 .retrieve()
                 .body(PythonInferResponse.class);

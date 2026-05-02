@@ -25,6 +25,7 @@ public class AdminSeedConfig {
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
                 User admin = new User();
                 admin.setEmail(adminEmail);
+                admin.setUsername("admin");                              // ← 추가
                 admin.setPasswordHash(passwordEncoder.encode("Admin1234!"));
                 admin.setNickname("관리자");
                 admin.setRole(UserRole.ADMIN);

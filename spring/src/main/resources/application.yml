@@ -44,9 +44,14 @@ server:
 app:
   env: ${APP_ENV:local}
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
+  ai-server-url: ${AI_SERVER_URL:http://ai-server:8000}
+  use-mock: ${USE_MOCK:false}
+  base-url: ${BASE_URL:http://localhost:8080}
   upload:
     dir: ${APP_UPLOAD_DIR:/home/ubuntu/CapStone_Docker_Compose_Setting/result_uploads}
     public-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:http://217.142.255.158/uploads}
+    upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
+    result-root: ${FILE_RESULT_ROOT:/data/results}
 
 tryon:
   mode: ${TRYON_MODE:mock}
@@ -62,7 +67,7 @@ file:
 
 python:
   inference:
-    base-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev}
+    base-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.app}
     connect-timeout-ms: 3000
     read-timeout-ms: 180000
 
@@ -70,21 +75,18 @@ jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:3600000}
 
-cm29:
-  api:
-    base-url: ${CM29_BASE_URL:https://api.29cm.co.kr}
-    authorization: ${CM29_AUTHORIZATION:mock}
-    partner-key: ${CM29_PARTNER_KEY:mock}
+logging:
+  level:
+    com.capstone: DEBUG
+    org.springframework.web: DEBUG
 
-naver:
-  api:
-    enabled: true
-    base-url: https://openapi.naver.com
-    client-id: ${NAVER_CLIENT_ID:}
-    client-secret: ${NAVER_CLIENT_SECRET:}
+ai:
+  server:
+    url: ${AI_SERVER_URL:http://ai-server:8000}
 
 storage:
   s3:
+    enabled: false
     endpoint: ${S3_ENDPOINT:}
     region: ${S3_REGION:ap-northeast-2}
     bucket: ${S3_BUCKET:}

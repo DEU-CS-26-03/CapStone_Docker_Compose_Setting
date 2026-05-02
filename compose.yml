@@ -67,6 +67,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # ✅ ai-server depends_on 제거 (Python은 외부 ngrok으로 연결)
     env_file:
       - .env
     environment:
@@ -104,6 +105,7 @@ volumes:
   redis_data:
   app_uploads:
   app_results:
+  # ✅ model_cache 제거 (우분투에 Python 없음)
 
 networks:
   capstone-net:

@@ -5,6 +5,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class LocalUploadResponse {
     private String objectKey;
     private String fileUrl;
