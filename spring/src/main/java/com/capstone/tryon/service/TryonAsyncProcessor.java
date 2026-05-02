@@ -8,11 +8,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class TryonAsyncProcessor {
+
+    @Value("${file.result-root:/data/results}")
+    private String resultRoot;
+
+    @Value("${file.result-base-url:http://localhost:8080}")
+    private String baseUrl;
 
     private final TryonService tryonService;
     private final CatVtonClient catVtonClient;

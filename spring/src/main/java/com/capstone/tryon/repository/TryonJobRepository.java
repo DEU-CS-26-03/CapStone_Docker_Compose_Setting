@@ -23,6 +23,8 @@ public interface TryonJobRepository extends JpaRepository<TryonJob, String> {
     @Query("SELECT j FROM TryonJob j WHERE j.status IN :statuses AND j.deleted = false ORDER BY j.createdAt ASC")
     Optional<TryonJob> findFirstByStatusInOrderByCreatedAtAsc(@Param("statuses") List<String> statuses);
 
+    Optional<TryonJob> findFirstByStatusOrderByCreatedAtAsc(String status);
+
     // 특정 상태 건수 확인 (모니터링용)
     long countByStatus(String status);
 }

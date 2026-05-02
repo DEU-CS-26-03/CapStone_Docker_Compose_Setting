@@ -1,1 +1,1 @@
-package com.capstone.tryon.python;import com.capstone.tryon.python.dto.PythonInferRequest;import com.capstone.tryon.python.dto.PythonInferResponse;public interface CatVtonClient {    PythonInferResponse infer(PythonInferRequest request);}
+package com.capstone.tryon.python;import com.capstone.tryon.python.dto.PythonInferRequest;import com.capstone.tryon.python.dto.PythonInferResponse;public interface CatVtonClient {    PythonInferResponse infer(PythonInferRequest request);    byte[] inferWithFiles(String personPath, String clothPath, String clothType);}

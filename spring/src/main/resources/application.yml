@@ -60,6 +60,7 @@ tryon:
 file:
   upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
   result-root: ${FILE_RESULT_ROOT:/data/results}
+  result-base-url: http://217.142.255.158:8080
   upload:
     user-images-dir: ${USER_IMAGES_DIR:/data/uploads/user-images}
     garments-dir: ${GARMENTS_DIR:/data/uploads/garments}

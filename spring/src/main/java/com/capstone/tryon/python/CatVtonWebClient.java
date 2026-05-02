@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -55,5 +57,38 @@ public class CatVtonWebClient implements CatVtonClient {
         res.setResultImageUrl("https://picsum.photos/seed/tryon/768/1024");
         res.setSuccess(true);
         return res;
+    }
+    @Override
+    public byte[] inferWithFiles(String personPath, String clothPath, String clothType) {
+        if (useMock) {
+            log.info("[CatVtonWebClient] MOCK 모드 — 더미 바이트 반환");
+            return new byte[]{};
+        }
+
+        String url = aiServerUrl + "/infer";
+        log.info("[CatVtonWebClient] inferWithFiles POST {} person={} cloth={}", url, personPath, clothPath);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("ngrok-skip-browser-warning", "true");
+        headers.setAccept(List.of(MediaType.APPLICATION_OCTET_STREAM, MediaType.IMAGE_JPEG));
+
+        Map<String, String> body = Map.of(
+                "person_image_path", personPath,
+                "cloth_image_path",  clothPath,
+                "cloth_type",        clothType != null ? clothType : "upper"
+        );
+
+        ResponseEntity<byte[]> response = restTemplate.exchange(
+                url,
+                HttpMethod.POST,
+                new HttpEntity<>(body, headers),
+                byte[].class
+        );
+
+        if (response.getBody() == null || response.getBody().length == 0) {
+            throw new RuntimeException("Python 서버에서 빈 이미지가 반환되었습니다.");
+        }
+        return response.getBody();
     }
 }

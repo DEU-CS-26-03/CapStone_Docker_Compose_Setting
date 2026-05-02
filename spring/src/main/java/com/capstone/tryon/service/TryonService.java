@@ -195,4 +195,28 @@ public class TryonService {
             throw new RuntimeException("파일 저장 실패: " + e.getMessage(), e);
         }
     }
+    // QUEUED 상태인 job 하나를 PROCESSING으로 바꾸고 반환
+    @Transactional
+    public Optional<TryonResponse> claimNextPendingJob() {
+        return tryonJobRepository.findFirstByStatusOrderByCreatedAtAsc("QUEUED")
+                .map(job -> {
+                    job.setStatus("PROCESSING");
+                    tryonJobRepository.save(job);
+                    return toResponse(job);
+                });
+    }
+
+    // 상태 업데이트
+    @Transactional
+    public TryonResponse updateStatus(String tryonId, String status, int progress,
+                                      String resultId, String resultImageUrl, String errorMessage) {
+        TryonJob job = tryonJobRepository.findById(tryonId)
+                .orElseThrow(() -> new RuntimeException("Job not found: " + tryonId));
+        job.setStatus(status);
+        job.setProgress(progress);
+        job.setResultId(resultId);
+        job.setResultImageUrl(resultImageUrl);
+        job.setErrorMessage(errorMessage);
+        return toResponse(tryonJobRepository.save(job));
+    }
 }
