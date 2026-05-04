@@ -50,6 +50,7 @@ app:
   use-mock: ${USE_MOCK:false}
   base-url: ${BASE_URL:https://apivirtualtryon.p-e.kr}
   upload:
+    dir: /data/uploads
     upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
     result-root: ${FILE_RESULT_ROOT:/data/results}
     public-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:https://apivirtualtryon.p-e.kr}
