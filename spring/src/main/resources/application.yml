@@ -86,6 +86,10 @@ logging:
   level:
     com.capstone: DEBUG
     org.springframework.web: DEBUG
+    org.springframework.security: TRACE
+    org.springframework.security.web.FilterChainProxy: TRACE
+    org.springframework.security.web.access.intercept: TRACE
+    org.springframework.security.web.util.matcher: TRACE
 
 ai:
   server:
