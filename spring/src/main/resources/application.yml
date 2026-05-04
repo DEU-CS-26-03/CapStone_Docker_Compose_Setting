@@ -48,7 +48,7 @@ app:
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
   ai-server-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev:8000}
   use-mock: ${USE_MOCK:false}
-  base-url: ${BASE_URL:http://localhost:8080}
+  base-url: ${BASE_URL:https://apivirtualtryon.p-e.kr}
   upload:
     dir: ${APP_UPLOAD_DIR:/home/ubuntu/CapStone_Docker_Compose_Setting/result_uploads}
     public-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:http://217.142.255.158/uploads}
@@ -69,6 +69,8 @@ file:
     results-dir: ${RESULTS_DIR:/data/results}
 
 python:
+  api:
+    base-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev}
   inference:
     base-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev}
     infer-path: /infer

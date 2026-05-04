@@ -6,14 +6,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class TryonAsyncProcessor {
 
     private final TryonService tryonService;
     private final CatVtonClient catVtonClient;
+    public TryonAsyncProcessor(
+            TryonService tryonService,
+            @Qualifier("catVtonApiClient") CatVtonClient catVtonClient
+    ) {
+        this.tryonService = tryonService;
+        this.catVtonClient = catVtonClient;
+    }
 
     @Async("tryonTaskExecutor")
     public void process(String tryonId, String personPath, String clothPath, String clothType) {
