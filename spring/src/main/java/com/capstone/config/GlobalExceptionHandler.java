@@ -6,6 +6,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -19,7 +20,6 @@ public class GlobalExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-    // @Valid 유효성 검사 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidation(
             MethodArgumentNotValidException ex) {
@@ -38,7 +38,13 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.BAD_REQUEST, firstMessage, fieldErrors));
     }
 
-    // 비즈니스 로직 오류 (중복 이메일 사전 검사, 로그인 실패 등)
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(errorBody(HttpStatus.METHOD_NOT_ALLOWED, ex.getMessage(), null));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(
             IllegalArgumentException ex) {
@@ -46,7 +52,6 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.BAD_REQUEST, ex.getMessage(), null));
     }
 
-    // 상태 충돌 (이미 처리 중인 작업, 중복 즐겨찾기 등)
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalState(
             IllegalStateException ex) {
@@ -54,7 +59,6 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.CONFLICT, ex.getMessage(), null));
     }
 
-    // DB 제약조건 위반 (중복 이메일, 중복 닉네임 등)
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrity(
             DataIntegrityViolationException ex) {
@@ -83,7 +87,6 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.CONFLICT, message, null));
     }
 
-    // 미지원 기능
     @ExceptionHandler(UnsupportedOperationException.class)
     public ResponseEntity<Map<String, Object>> handleUnsupported(
             UnsupportedOperationException ex) {
@@ -91,7 +94,6 @@ public class GlobalExceptionHandler {
                 .body(errorBody(HttpStatus.NOT_IMPLEMENTED, ex.getMessage(), null));
     }
 
-    // 그 외 서버 오류
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
         log.error("Unhandled exception", ex);
