@@ -9,7 +9,6 @@ import com.capstone.tryon.entity.TryonJob;
 import com.capstone.tryon.repository.TryonJobRepository;
 import com.capstone.user.entity.User;
 import com.capstone.user.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -21,30 +20,35 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.context.annotation.Lazy;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class TryonService {
 
     private final TryonJobRepository tryonJobRepository;
     private final JobRedisRepository jobRedisRepository;
     private final UserRepository userRepository;
-    // @Async가 있는 별도 Bean 주입 (@Lazy: 순환참조 방지)
     private final TryonAsyncProcessor tryonAsyncProcessor;
+
+    public TryonService(
+            TryonJobRepository tryonJobRepository,
+            JobRedisRepository jobRedisRepository,
+            UserRepository userRepository,
+            @Lazy TryonAsyncProcessor tryonAsyncProcessor
+    ) {
+        this.tryonJobRepository = tryonJobRepository;
+        this.jobRedisRepository = jobRedisRepository;
+        this.userRepository = userRepository;
+        this.tryonAsyncProcessor = tryonAsyncProcessor;
+    }
 
     @Value("${app.file.upload-root:/data/uploads}")
     private String uploadRoot;
-
-    @Value("${app.file.result-root:/data/results}")
-    private String resultRoot;
-
-    @Value("${app.base-url:http://localhost:8080}")
-    private String baseUrl;
 
     @Transactional
     public TryonResponse create(TryonCreateRequest request, String email) {
