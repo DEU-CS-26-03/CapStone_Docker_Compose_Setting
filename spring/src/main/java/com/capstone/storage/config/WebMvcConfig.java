@@ -8,13 +8,23 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Value("${app.file.result-root:/data/results}")
+    @Value("${file.upload.garments-dir:/data/uploads/garments}")
+    private String garmentsDir;
+
+    @Value("${file.result-root:/data/results}")
     private String resultRoot;
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // /uploads/results/** → Ubuntu 실제 경로 매핑
+        String garmentsLocation = garmentsDir.endsWith("/") ? garmentsDir : garmentsDir + "/";
+        String resultsLocation = resultRoot.endsWith("/") ? resultRoot : resultRoot + "/";
+
+        // 의상 이미지
+        registry.addResourceHandler("/files/garments/**")
+                .addResourceLocations("file:" + garmentsLocation);
+
+        // 추론 결과 이미지
         registry.addResourceHandler("/uploads/results/**")
-                .addResourceLocations("file:" + resultRoot + "/");
+                .addResourceLocations("file:" + resultsLocation);
     }
 }

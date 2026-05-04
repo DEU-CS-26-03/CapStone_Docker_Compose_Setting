@@ -46,14 +46,13 @@ server:
 app:
   env: ${APP_ENV:local}
   frontend-base-url: ${FRONTEND_BASE_URL:http://localhost:3000}
-  ai-server-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev:8000}
+  ai-server-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev}
   use-mock: ${USE_MOCK:false}
   base-url: ${BASE_URL:https://apivirtualtryon.p-e.kr}
   upload:
-    dir: ${APP_UPLOAD_DIR:/home/ubuntu/CapStone_Docker_Compose_Setting/result_uploads}
-    public-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:http://217.142.255.158/uploads}
     upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
     result-root: ${FILE_RESULT_ROOT:/data/results}
+    public-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:https://apivirtualtryon.p-e.kr}
 
 tryon:
   mode: ${TRYON_MODE:mock}
@@ -62,7 +61,7 @@ tryon:
 file:
   upload-root: ${FILE_UPLOAD_ROOT:/data/uploads}
   result-root: ${FILE_RESULT_ROOT:/data/results}
-  result-base-url: http://217.142.255.158:8080
+  result-base-url: ${APP_UPLOAD_PUBLIC_BASE_URL:https://apivirtualtryon.p-e.kr}
   upload:
     user-images-dir: ${USER_IMAGES_DIR:/data/uploads/user-images}
     garments-dir: ${GARMENTS_DIR:/data/uploads/garments}

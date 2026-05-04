@@ -6,6 +6,7 @@ import com.capstone.auth.dto.RegisterRequest;
 import com.capstone.auth.dto.RegisterResponse;
 import com.capstone.security.jwt.JwtTokenProvider;
 import com.capstone.user.entity.User;
+import com.capstone.user.entity.UserRole;
 import com.capstone.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,25 +23,27 @@ public class AuthService {
 
     @Transactional
     public RegisterResponse register(RegisterRequest request) {
-        // @Valid가 기본 검증을 처리하므로, 비즈니스 중복 체크만 남김
-        String email = normalizeEmail(request.getEmail());
-        String nickname = request.getNickname().trim();
+        String normalizedEmail = normalizeEmail(request.getEmail());
+        String normalizedNickname = normalizeNickname(request.getNickname());
 
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException("이미 사용 중인 이메일입니다.");
         }
 
-        if (userRepository.existsByNickname(nickname)) {
+        if (userRepository.existsByNickname(normalizedNickname)) {
             throw new IllegalArgumentException("이미 사용 중인 닉네임입니다.");
         }
 
-        User user = new User();
-        user.setEmail(email);
-        user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setNickname(nickname);
-        // role, status 는 Entity 기본값(USER, ACTIVE) 사용
+        User user = User.builder()
+                .username(normalizedNickname)
+                .email(normalizedEmail)
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .nickname(normalizedNickname)
+                .role(UserRole.USER)
+                .build();
 
         User saved = userRepository.save(user);
+
         return RegisterResponse.builder()
                 .message("회원가입이 완료되었습니다.")
                 .user(RegisterResponse.UserSummary.builder()
@@ -54,17 +57,19 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
-        String email = normalizeEmail(request.getEmail());
+        String normalizedEmail = normalizeEmail(request.getEmail());
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "이메일 또는 비밀번호가 올바르지 않습니다."));
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
-        String accessToken = jwtTokenProvider.createToken(user.getId(), user.getEmail());
+        String accessToken = jwtTokenProvider.createToken(
+                user.getId(),
+                user.getEmail()
+        );
 
         return LoginResponse.builder()
                 .accessToken(accessToken)
@@ -80,5 +85,9 @@ public class AuthService {
 
     private String normalizeEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    private String normalizeNickname(String nickname) {
+        return nickname == null ? "" : nickname.trim();
     }
 }
