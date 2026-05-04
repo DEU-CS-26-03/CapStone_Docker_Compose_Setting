@@ -19,11 +19,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
         String garmentsLocation = garmentsDir.endsWith("/") ? garmentsDir : garmentsDir + "/";
         String resultsLocation = resultRoot.endsWith("/") ? resultRoot : resultRoot + "/";
 
-        // 의상 이미지
         registry.addResourceHandler("/files/garments/**")
                 .addResourceLocations("file:" + garmentsLocation);
 
-        // 추론 결과 이미지
         registry.addResourceHandler("/uploads/results/**")
                 .addResourceLocations("file:" + resultsLocation);
     }
