@@ -24,8 +24,8 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final CustomAuthenticationEntryPoint authenticationEntryPoint;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Bean // 중복된 @Bean 제거
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> {})
                 .csrf(csrf -> csrf.disable())
@@ -45,6 +45,10 @@ public class SecurityConfig {
                                 "/api/v1/health",
                                 "/api/v1/models/status"
                         ).permitAll()
+
+                        // ★ 추가됨: 캡스톤 데모를 위한 가상 피팅 및 즐겨찾기 임시 허용
+                        .requestMatchers("/api/v1/tryons/**").permitAll()
+                        .requestMatchers("/api/v1/favorites/**").permitAll()
 
                         // 의류 목록/상세 비로그인 조회 허용
                         .requestMatchers(HttpMethod.GET, "/api/v1/garments/**").permitAll()

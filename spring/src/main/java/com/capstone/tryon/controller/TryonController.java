@@ -1,6 +1,6 @@
-// com/capstone/tryon/controller/TryonController.java
 package com.capstone.tryon.controller;
 
+import com.capstone.tryon.dto.TryonCreateRequest;
 import com.capstone.tryon.dto.TryonResponse;
 import com.capstone.tryon.service.TryonService;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import com.capstone.tryon.dto.TryonCreateRequest;
 
 import java.util.List;
 import java.util.Map;
@@ -22,22 +21,23 @@ public class TryonController {
 
     private final TryonService tryonService;
 
-    /**
-     * POST /api/v1/tryons
-     * Content-Type: multipart/form-data
-     * - personImage : 사람 이미지 파일
-     * - clothImage  : 의상 이미지 파일
-     * - clothType   : upper / lower / overall (선택, 기본 upper)
-     */
+    // ★ NPE 방지용 안전한 이메일 추출 도우미 메서드
+    private String getSafeEmail(Authentication authentication) {
+        if (authentication != null && authentication.getName() != null && !authentication.getName().equals("anonymousUser")) {
+            return authentication.getName();
+        }
+        return "guest@capstone.com"; // 비회원용 더미 이메일
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<TryonResponse> create(
             @RequestPart("personImage") MultipartFile personImage,
             @RequestPart("clothImage") MultipartFile clothImage,
-            @RequestPart(value = "clothType", required = false) String clothType,
+            @RequestParam(value = "clothType", required = false) String clothType,
             Authentication authentication) {
 
-        String email = authentication.getName();
+        String email = getSafeEmail(authentication);
+
         TryonCreateRequest request = new TryonCreateRequest();
         request.setPersonImage(personImage);
         request.setClothImage(clothImage);
@@ -47,19 +47,17 @@ public class TryonController {
                 .body(tryonService.create(request, email));
     }
 
-    // GET /api/v1/tryons — 내 작업 목록
     @GetMapping
     public ResponseEntity<List<TryonResponse>> list(Authentication authentication) {
-        return ResponseEntity.ok(tryonService.listByUser(authentication.getName()));
+        String email = getSafeEmail(authentication);
+        return ResponseEntity.ok(tryonService.listByUser(email));
     }
 
-    // GET /api/v1/tryons/{tryonId} — 작업 상태 폴링
     @GetMapping("/{tryonId}")
     public ResponseEntity<TryonResponse> getById(@PathVariable String tryonId) {
         return ResponseEntity.ok(tryonService.getById(tryonId));
     }
 
-    // DELETE /api/v1/tryons/{tryonId}
     @DeleteMapping("/{tryonId}")
     public ResponseEntity<Map<String, String>> delete(@PathVariable String tryonId) {
         tryonService.softDelete(tryonId);
