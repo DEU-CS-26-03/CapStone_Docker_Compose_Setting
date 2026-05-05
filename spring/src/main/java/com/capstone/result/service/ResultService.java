@@ -122,9 +122,16 @@ public class ResultService {
 
     private GarmentResponse toGarmentResponse(Garment g) {
         return new GarmentResponse(
-                String.valueOf(g.getGarmentId()), g.getStatus(), g.getSourceType(),
-                g.getCategory(), g.getFilename(), g.getContentType(),
-                g.getFileUrl(), g.getBrandKey(), g.getCreatedAt()
+                String.valueOf(g.getGarmentId()),
+                g.getStatus(),
+                g.getSourceType(),
+                g.getCategory(),
+                g.getName() != null && !g.getName().isBlank() ? g.getName() : g.getFilename(),
+                g.getPrice(),
+                g.getContentType(),
+                g.getFileUrl(),
+                g.getBrandKey(),
+                g.getCreatedAt()
         );
     }
 }
