@@ -18,8 +18,9 @@ public class RestTemplateConfig {
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder
-                .setConnectTimeout(Duration.ofSeconds(5))
-                .setReadTimeout(Duration.ofSeconds(30))   // AI 추론 시간 고려해 10s → 30s
+                .setConnectTimeout(Duration.ofSeconds(10)) // 연결 대기 시간 10초로 약간 여유있게
+                // ★ 핵심 수정: AI 파이프라인(약 36초 소요)을 충분히 기다릴 수 있도록 3분(180초)으로 연장
+                .setReadTimeout(Duration.ofSeconds(180))
                 .additionalInterceptors(new NgrokHeaderInterceptor())
                 .build();
     }

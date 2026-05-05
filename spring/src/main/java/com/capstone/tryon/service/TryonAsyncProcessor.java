@@ -1,13 +1,16 @@
 package com.capstone.tryon.service;
 
 import com.capstone.tryon.python.CatVtonClient;
-import com.capstone.tryon.python.dto.PythonInferResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @Slf4j
 @Component
@@ -15,6 +18,13 @@ public class TryonAsyncProcessor {
 
     private final TryonService tryonService;
     private final CatVtonClient catVtonClient;
+
+    // application.yml 에 설정된 결과 저장 경로 및 퍼블릭 URL
+    @Value("${FILE_RESULT_ROOT:/data/results}")
+    private String resultRoot;
+
+    @Value("${APP_UPLOAD_PUBLIC_BASE_URL:https://apivirtualtryon.p-e.kr}")
+    private String publicBaseUrl;
 
     public TryonAsyncProcessor(
             TryonService tryonService,
@@ -26,52 +36,34 @@ public class TryonAsyncProcessor {
 
     @Async("tryonTaskExecutor")
     public void process(String tryonId, String personPath, String clothPath, String clothType) {
-        log.info("[Async] tryonId={} 시작 - DB 커밋 대기 중...", tryonId);
+        log.info("[Async] tryonId={} 시작", tryonId);
 
         try {
-            // 메인 스레드가 DB 저장을 완료할 수 있도록 1초(1000ms) 대기
             Thread.sleep(1000);
-
             tryonService.updateStatusInNewTx(tryonId, "PROCESSING", 10, null, null, null);
 
-            // ★ 폭탄 제거: 로컬 경로(/data/uploads/...)를 공개 URL(https://...)로 변환
-            // (Spring WebMvc 설정에 따라 /files/ 또는 /uploads/ 로 매핑되어야 합니다)
-            String baseUrl = "https://apivirtualtryon.p-e.kr/files/"; // 또는 /uploads/
+            // ★ 수정됨: 파이썬에서 JSON이 아닌 진짜 이미지 파일(바이트 배열)을 리턴받음
+            byte[] imageBytes = catVtonClient.infer(personPath, clothPath, clothType);
 
-            String personFileName = new File(personPath).getName();
-            String clothFileName = new File(clothPath).getName();
-
-            // 파이썬은 이 URL에 접속해서 이미지를 다운로드하여 추론합니다.
-            String personUrl = baseUrl + personFileName;
-            String clothUrl = clothPath.contains("http") ? clothPath : baseUrl + clothFileName;
-
-            log.info("[Async] tryonId={} 파이썬으로 추론 요청 전송 시작", tryonId);
-            log.info(" - 사람 이미지 URL: {}", personUrl);
-            log.info(" - 옷 이미지 URL: {}", clothUrl);
-
-            // 변환된 URL을 파이썬으로 전송!
-            PythonInferResponse response = catVtonClient.infer(personUrl, clothUrl, clothType);
-
-            if (response == null) {
-                throw new RuntimeException("Python 응답이 null 입니다.");
-            }
-
-            if (!response.isSuccess()) {
-                throw new RuntimeException("Python 추론 실패: " + response.getError());
-            }
-
-            String resultImageUrl = response.getResultImageUrl();
-            if (resultImageUrl == null || resultImageUrl.isBlank()) {
-                throw new RuntimeException("Python result_image_url 이 비어 있습니다.");
-            }
-
+            // 1. 우분투 서버의 /data/results 폴더에 파일 저장
             String resultId = "result_" + tryonId.substring(0, 8);
+            String filename = resultId + ".jpg";
+
+            File dir = new File(resultRoot);
+            if (!dir.exists()) dir.mkdirs();
+
+            Path resultFilePath = Paths.get(resultRoot, filename);
+            Files.write(resultFilePath, imageBytes);
+
+            // 2. 프론트엔드가 접근할 수 있는 최종 URL 생성 (예: https://apivirtualtryon.p-e.kr/results/xxx.jpg)
+            // (경로는 Nginx 설정에 따라 /results/ 또는 /files/results/ 등으로 맞춰주세요)
+            String resultImageUrl = "https://apivirtualtryon.p-e.kr/uploads/results/" + filename;
+
             tryonService.updateStatusWithResultInNewTx(tryonId, resultId, resultImageUrl);
 
-            log.info("[Async] tryonId={} 완료 url={}", tryonId, resultImageUrl);
+            log.info("[Async] tryonId={} 완료, 최종 이미지 URL={}", tryonId, resultImageUrl);
 
         } catch (InterruptedException ie) {
-            log.error("[Async] tryonId={} 스레드 대기 중 인터럽트 발생", tryonId, ie);
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             log.error("[Async] tryonId={} 실패", tryonId, e);

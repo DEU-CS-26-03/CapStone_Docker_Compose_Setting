@@ -1,1 +1,1 @@
-package com.capstone.tryon.python;import com.capstone.tryon.python.dto.PythonInferResponse;public interface CatVtonClient {    PythonInferResponse infer(String personPath, String clothPath, String clothType);}
+package com.capstone.tryon.python;public interface CatVtonClient {    // 반환 타입을 byte[] (실제 이미지 파일) 로 변경    byte[] infer(String personPath, String clothPath, String clothType);}

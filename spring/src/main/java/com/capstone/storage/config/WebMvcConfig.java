@@ -24,5 +24,8 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
         registry.addResourceHandler("/uploads/results/**")
                 .addResourceLocations("file:" + resultsLocation);
+
+        registry.addResourceHandler("/uploads/user-images/**")
+                .addResourceLocations("file:/data/uploads/"); // 실제 파일 저장 경로
     }
 }
