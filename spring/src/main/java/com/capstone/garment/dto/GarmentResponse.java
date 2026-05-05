@@ -20,6 +20,7 @@ public class GarmentResponse {
 
     private String category;
     private String name;
+    private Integer price;
 
     @JsonProperty("content_type")
     private String contentType;

@@ -40,7 +40,6 @@ public class Garment {
     private String standardCategoryCode;
 
     private String category;
-    private String name;
 
     @Column(name = "brand_name")
     private String brandName;
@@ -51,8 +50,13 @@ public class Garment {
     @Column(name = "content_type")
     private String contentType;
 
-    private BigDecimal price;
     private String currency;
+
+    @Column(name = "name")
+    private String name;
+
+    @Column(name = "price")
+    private Integer price;
 
     @Column(name = "file_url")
     private String fileUrl;
