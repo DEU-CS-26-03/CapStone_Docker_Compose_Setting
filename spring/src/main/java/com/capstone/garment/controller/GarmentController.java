@@ -28,6 +28,10 @@ public class GarmentController {
             @RequestParam(value = "category", required = false) String category,
             Authentication authentication
     ) throws IOException {
+        if (authentication == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
+
         String email = authentication.getName();
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(service.upload(file, category, email));

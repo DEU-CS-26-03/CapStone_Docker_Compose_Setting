@@ -20,6 +20,9 @@ public class FavoriteController {
     // GET /api/v1/favorites — 내 즐겨찾기 목록 조회
     @GetMapping
     public ResponseEntity<List<FavoriteResponse>> list(Authentication authentication) {
+        if (authentication == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
         return ResponseEntity.ok(service.list(authentication.getName()));
     }
 
@@ -29,9 +32,13 @@ public class FavoriteController {
             @RequestBody Map<String, String> body,
             Authentication authentication
     ) {
+        if (authentication == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
         service.add(authentication.getName(), body.get("garmentId"));
         return ResponseEntity.ok(Map.of("message", "즐겨찾기에 추가되었습니다."));
     }
+
 
     // DELETE /api/v1/favorites/{garmentId} — 즐겨찾기 제거
     @DeleteMapping("/{garmentId}")
@@ -39,6 +46,9 @@ public class FavoriteController {
             @PathVariable String garmentId,
             Authentication authentication
     ) {
+        if (authentication == null) {
+            throw new IllegalStateException("인증 정보가 없습니다.");
+        }
         service.remove(authentication.getName(), garmentId);
         return ResponseEntity.ok(Map.of("message", "즐겨찾기에서 제거되었습니다."));
     }
