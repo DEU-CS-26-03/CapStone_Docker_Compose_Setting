@@ -39,7 +39,9 @@ public class CatVtonApiClient implements CatVtonClient {
             body.add("person_image", new FileSystemResource(new File(personPath)));
             body.add("cloth_image", new FileSystemResource(new File(clothPath)));
 
-            if (clothType != null && !clothType.isEmpty()) {
+            if (clothType == null || clothType.isEmpty()) {
+                body.add("cloth_type", "upper"); // 안전장치로 기본값 상의 설정
+            } else {
                 body.add("cloth_type", clothType);
             }
 
