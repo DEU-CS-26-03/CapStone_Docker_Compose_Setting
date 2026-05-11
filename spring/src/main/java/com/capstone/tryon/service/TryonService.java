@@ -50,41 +50,39 @@ public class TryonService {
 
     @Transactional
     public TryonResponse create(TryonCreateRequest request, String email) {
-        // ★ 에러 방지: DB에서 무조건 첫 번째 유저(안전한 외래키)를 가져옴
+        // 1. 유저 매핑 (안전하게 첫 번째 유저 선택)
         Long userId = 1L;
         try {
             List<User> users = userRepository.findAll();
-            if (!users.isEmpty()) {
-                userId = users.get(0).getId();
-            }
-        } catch (Exception e) {
-            log.warn("유저를 찾을 수 없어 기본값 1L을 사용합니다.");
-        }
+            if (!users.isEmpty()) userId = users.get(0).getId();
+        } catch (Exception e) { log.warn("유저 매핑 실패, 기본값 사용"); }
 
+        // 2. 고유 ID 생성
         String tryonId = "tryon_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
+        // ★ [중요] 파일을 DB 저장 전에 먼저 물리적으로 저장합니다.
+        // 이렇게 해야 response와 AsyncProcessor에 null이 전달되지 않습니다.
+        String personPath = saveFile(request.getPersonImage(), tryonId, "person");
+        String clothPath = saveFile(request.getClothImage(), tryonId, "cloth");
+
+        // 3. DB Entity 생성 및 모든 필드 한 번에 세팅
         TryonJob job = new TryonJob();
         job.setTryonId(tryonId);
         job.setUserId(userId);
         job.setStatus("queued");
         job.setProgress(0);
-        tryonJobRepository.save(job);
+        job.setUserImageId(personPath);  // 경로 세팅
+        job.setGarmentId(clothPath);    // 경로 세팅
+        job.setClothType(request.getClothType());
+
+        // 4. DB와 Redis에 즉시 반영 (Flush를 사용하여 트랜잭션 확정 준비)
+        tryonJobRepository.saveAndFlush(job);
 
         try {
             jobRedisRepository.save(tryonId, "queued", 0);
-        } catch (Exception e) {
-            log.warn("[Redis] 캐시 저장 실패 (tryonId={}): {}", tryonId, e.getMessage());
-        }
+        } catch (Exception e) { log.warn("[Redis] 저장 실패: {}", e.getMessage()); }
 
-        // 파일 저장 (에러 발생 시 RuntimeException)
-        String personPath = saveFile(request.getPersonImage(), tryonId, "person");
-        String clothPath = saveFile(request.getClothImage(), tryonId, "cloth");
-
-        job.setUserImageId(personPath);
-        job.setGarmentId(clothPath);
-        tryonJobRepository.save(job);
-
-        // 비동기로 Python 추론 요청
+        // 5. 비동기 Python 추론 요청 (이미 파일 경로가 확정된 상태)
         tryonAsyncProcessor.process(tryonId, personPath, clothPath, request.getClothType());
 
         TryonResponse res = toResponse(job);

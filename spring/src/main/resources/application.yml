@@ -75,7 +75,7 @@ python:
     base-url: ${AI_SERVER_URL:https://urchin-evil-reborn.ngrok-free.dev}
     infer-path: /infer
     health-path: /health
-    connect-timeout-ms: 3000
+    connect-timeout-ms: 5000
     read-timeout-ms: 180000
 
 jwt:

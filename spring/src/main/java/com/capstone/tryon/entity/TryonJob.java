@@ -27,6 +27,10 @@ public class TryonJob {
     @Column(name = "user_image_id")
     private String userImageId;
 
+
+    @Column(name = "cloth_type")
+    private String clothType = "upper";
+
     @Column(name = "garment_id")
     private String garmentId;
 

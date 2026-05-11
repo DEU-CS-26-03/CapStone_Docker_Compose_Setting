@@ -23,5 +23,6 @@ public class TryonCreateRequest {
 
     private MultipartFile personImage;
     private MultipartFile clothImage;
-    private String clothType = "upper"; // 기본값
+
+    private String clothType = "upper";
 }
