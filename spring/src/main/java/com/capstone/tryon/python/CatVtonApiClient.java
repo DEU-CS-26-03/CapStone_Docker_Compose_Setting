@@ -39,17 +39,17 @@ public class CatVtonApiClient implements CatVtonClient {
             body.add("person_image", new FileSystemResource(new File(personPath)));
             body.add("cloth_image", new FileSystemResource(new File(clothPath)));
 
+            // ★ 수정됨: 프론트엔드에서 받은 값을 그대로 전송하되, 안전하게 소문자 처리
             if (clothType == null || clothType.isEmpty()) {
-                body.add("cloth_type", "upper"); // 안전장치로 기본값 상의 설정
+                body.add("cloth_type", "upper");
             } else {
-                body.add("cloth_type", clothType);
+                body.add("cloth_type", clothType.toLowerCase());
             }
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
-            log.info("[CatVtonClient] 파이썬으로 이미지 전송 및 추론 요청: {}", url);
+            log.info("[CatVtonClient] 파이썬으로 추론 요청 전송 | Mode: {} | URL: {}", clothType, url);
 
-            // ★ 수정됨: PythonInferResponse.class 가 아니라 byte[].class 로 진짜 파일을 받음
             ResponseEntity<byte[]> response = restTemplate.exchange(
                     url,
                     HttpMethod.POST,

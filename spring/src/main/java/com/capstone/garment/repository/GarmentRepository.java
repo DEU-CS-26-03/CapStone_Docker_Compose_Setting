@@ -8,7 +8,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 import java.util.Optional;
 
-public interface GarmentRepository extends JpaRepository<Garment, String> { // Long → String
+public interface GarmentRepository extends JpaRepository<Garment, String> {
 
     // ── 상품 검색 (CatalogService, GarmentService 공용) ─────────
     @Query("""
@@ -38,4 +38,11 @@ public interface GarmentRepository extends JpaRepository<Garment, String> { // L
     List<Garment> findTop10ByStatusAndCategoryNotOrderByCreatedAtDesc(String status, String category);
 
     List<Garment> findTop10ByStatusOrderByCreatedAtDesc(String status);
+
+    // ── ★ 추가됨: 가상 피팅 결과 별점 맞춤 추천용 (랜덤 4개 추출) ──
+    @Query(value = "SELECT * FROM garments WHERE category = :category AND status NOT IN ('DELETED', 'HIDDEN') ORDER BY RAND() LIMIT 4", nativeQuery = true)
+    List<Garment> findSimilarGarments(@Param("category") String category);
+
+    @Query(value = "SELECT * FROM garments WHERE category != :category AND status NOT IN ('DELETED', 'HIDDEN') ORDER BY RAND() LIMIT 4", nativeQuery = true)
+    List<Garment> findDifferentGarments(@Param("category") String category);
 }

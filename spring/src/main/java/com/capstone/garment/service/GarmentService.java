@@ -30,7 +30,7 @@ public class GarmentService {
     private static final List<String> ALLOWED_TYPES = Arrays.asList("image/jpeg", "image/png");
     private static final long MAX_SIZE_BYTES = 20 * 1024 * 1024L;
     private static final List<String> ALLOWED_CATEGORIES = Arrays.asList(
-            "top", "bottom", "dress", "outer", "shoes", "bag"
+            "top", "bottom", "dress", "outer", "shoes", "bag", "upper", "lower", "overall" // 프론트 매핑(upper, lower) 허용 위해 추가
     );
 
     public GarmentService(GarmentRepository repository, UserRepository userRepository) {
@@ -128,6 +128,23 @@ public class GarmentService {
                 .orElseThrow(() -> new IllegalArgumentException("해당 의류를 찾을 수 없습니다: " + garmentId));
         entity.setStatus("HIDDEN");
         repository.save(entity);
+    }
+
+    // ★ 추가됨: 가상 피팅 결과 별점 기반 맞춤형 의류 추천
+    @Transactional(readOnly = true)
+    public List<GarmentResponse> getRecommendations(String type, String category) {
+        List<Garment> garments;
+
+        // 프론트에서 넘어온 type 파라미터가 "similar"면 같은 카테고리, 아니면 다른 카테고리에서 무작위 4개 조회
+        if ("similar".equalsIgnoreCase(type)) {
+            garments = repository.findSimilarGarments(category);
+        } else {
+            garments = repository.findDifferentGarments(category);
+        }
+
+        return garments.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
     }
 
     private GarmentResponse toResponse(Garment e) {

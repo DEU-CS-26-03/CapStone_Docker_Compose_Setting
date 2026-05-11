@@ -69,4 +69,14 @@ public class GarmentController {
         service.softDelete(garmentId);
         return ResponseEntity.ok(Map.of("message", "의류가 비노출 처리되었습니다."));
     }
+
+    // ★ 추가됨: 가상 피팅 결과 기반 맞춤형 의류 추천 (별점 연동)
+    // GET /api/v1/garments/recommend?type=similar&category=upper
+    @GetMapping("/recommend")
+    public ResponseEntity<List<GarmentResponse>> recommend(
+            @RequestParam(value = "type", defaultValue = "similar") String type,
+            @RequestParam(value = "category", defaultValue = "upper") String category
+    ) {
+        return ResponseEntity.ok(service.getRecommendations(type, category));
+    }
 }
