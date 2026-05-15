@@ -76,7 +76,7 @@ public class GarmentService {
         // ★ 2. 프론트에서 받은 텍스트 데이터 엔티티에 저장 (이름 없음 문제 해결)
         entity.setName(name != null && !name.isBlank() ? name : "이름 없음");
         entity.setBrandKey(brandName != null && !brandName.isBlank() ? brandName : "기타");
-        entity.setPrice(parsePrice(price)); // 문자열 가격을 숫자로 안전하게 변환
+        entity.setPrice(parsePrice(price)); // 문자열 가격을 숫자로 변환
 
         entity.setFilename(file.getOriginalFilename());
         entity.setContentType(contentType);
@@ -87,15 +87,10 @@ public class GarmentService {
     }
     // ★ 3. 가격 문자열을 Integer로 안전하게 변환하는 헬퍼 메서드 추가
     private Integer parsePrice(String priceStr) {
-        if (priceStr == null || priceStr.isBlank()) {
-            return 0;
-        }
+        if (priceStr == null || priceStr.isBlank()) return 0;
         try {
-            // 숫자 외의 문자가 섞여 있을 경우를 대비해 정규식 처리 후 변환
             return Integer.parseInt(priceStr.replaceAll("[^0-9]", ""));
-        } catch (NumberFormatException e) {
-            return 0;
-        }
+        } catch (NumberFormatException e) { return 0; }
     }
 
     @Transactional(readOnly = true)

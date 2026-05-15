@@ -3,23 +3,20 @@ package com.capstone.result.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
-
 import java.time.OffsetDateTime;
 
 @Getter
-@Setter
+@Setter // ★ 에러 로그의 'setDeleted', 'getGarmentCategory' 등 해결
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
 @Table(name = "results")
 public class Result {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ✅ 외부 노출용 결과 ID (UUID 등)
     @Column(name = "result_id", unique = true)
     private String resultId;
 
@@ -38,13 +35,11 @@ public class Result {
     @Column(name = "storage_path")
     private String storagePath;
 
-    // ✅ AI 생성 소요 시간 (ms)
     @Column(name = "generation_ms")
     private Integer generationMs;
 
-    // ✅ 피팅 당시 의류 카테고리 스냅샷
     @Column(name = "garment_category")
-    private String garmentCategory;
+    private String garmentCategory; // ★ getGarmentCategory() 에러 해결
 
     private int rating;
     private String comment;

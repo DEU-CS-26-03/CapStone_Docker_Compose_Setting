@@ -66,9 +66,11 @@ public class AuthService {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 올바르지 않습니다.");
         }
 
+        // ★ 핵심 수정: 이전에 JwtTokenProvider를 수정한 것에 맞춰, 세 번째 파라미터로 role을 넘겨줍니다.
         String accessToken = jwtTokenProvider.createToken(
                 user.getId(),
-                user.getEmail()
+                user.getEmail(),
+                user.getRole().name() // <-- 프론트엔드가 관리자 여부를 알 수 있도록 토큰에 권한 박제!
         );
 
         return LoginResponse.builder()

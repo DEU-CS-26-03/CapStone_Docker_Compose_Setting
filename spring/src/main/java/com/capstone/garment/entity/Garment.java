@@ -4,11 +4,9 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-
-import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
-@Getter
+@Getter // @Data 대신 명시적 Getter/Setter 권장
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -73,7 +71,8 @@ public class Garment {
     private String metadataJson;
 
     @Builder.Default
-    private boolean deleted = false;
+    @Column(nullable = false)
+    private boolean deleted = false; // ★ 서비스의 setDeleted(true) 에러 해결
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

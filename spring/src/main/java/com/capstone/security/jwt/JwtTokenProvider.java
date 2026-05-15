@@ -1,5 +1,3 @@
-//토큰 생성- 유효성 검증-사용자명 추출, 식별, Authentication 생성(고려)
-
 package com.capstone.security.jwt;
 
 import com.capstone.user.service.CustomUserDetailsService;
@@ -28,8 +26,8 @@ public class JwtTokenProvider {
         return Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
     }
 
-    // 실제 로그인용: userId + email 기반 토큰 생성
-    public String createToken(Long userId, String email) {
+    // ★ 수정됨: 권한(role)을 추가로 파라미터로 받도록 변경
+    public String createToken(Long userId, String email, String role) {
         Date now = new Date();
         Date expiry = new Date(now.getTime() + jwtProperties.getExpiration());
 
@@ -43,12 +41,17 @@ public class JwtTokenProvider {
             builder.claim("userId", userId);
         }
 
+        // ★ 핵심 추가: 프론트엔드가 권한을 확인할 수 있도록 토큰에 role 심기
+        if (role != null && !role.isBlank()) {
+            builder.claim("role", role);
+        }
+
         return builder.compact();
     }
 
-    // 기존 코드 호환용
+    // 기존 코드 호환용 (권한 없는 단순 토큰 생성 시)
     public String generateToken(String username) {
-        return createToken(null, username);
+        return createToken(null, username, "USER"); // 기본값 USER
     }
 
     // 토큰에서 email(subject) 추출

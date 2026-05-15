@@ -1,11 +1,10 @@
 package com.capstone.storage.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+
 @Getter
-@Builder
+@Setter
+@Builder // ★ 에러 로그의 'cannot find symbol: method builder()' 해결
 @NoArgsConstructor
 @AllArgsConstructor
 public class PresignResponse {
