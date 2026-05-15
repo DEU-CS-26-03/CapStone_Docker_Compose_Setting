@@ -39,7 +39,7 @@ public class GarmentService {
     }
 
     @Transactional
-    public GarmentResponse upload(MultipartFile file, String category, String email) throws IOException {
+    public GarmentResponse upload(MultipartFile file, String category, String name, String brandName, String price, String email) throws IOException {
 
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
@@ -48,6 +48,8 @@ public class GarmentService {
         if (file.getSize() > MAX_SIZE_BYTES) {
             throw new IllegalArgumentException("파일 크기는 20MB를 초과할 수 없습니다.");
         }
+
+        // ALLOWED_CATEGORIES에 이미 outer, dress가 포함되어 있으므로 추가 수정 불필요
         if (category != null && !category.isBlank() && !ALLOWED_CATEGORIES.contains(category)) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다. 허용: " + ALLOWED_CATEGORIES);
         }
@@ -70,12 +72,30 @@ public class GarmentService {
         entity.setStatus("ACTIVE");
         entity.setSourceType("UPLOAD");
         entity.setCategory(category);
+
+        // ★ 2. 프론트에서 받은 텍스트 데이터 엔티티에 저장 (이름 없음 문제 해결)
+        entity.setName(name != null && !name.isBlank() ? name : "이름 없음");
+        entity.setBrandKey(brandName != null && !brandName.isBlank() ? brandName : "기타");
+        entity.setPrice(parsePrice(price)); // 문자열 가격을 숫자로 안전하게 변환
+
         entity.setFilename(file.getOriginalFilename());
         entity.setContentType(contentType);
         entity.setFileUrl("/files/garments/" + savedFilename);
 
         repository.save(entity);
         return toResponse(entity);
+    }
+    // ★ 3. 가격 문자열을 Integer로 안전하게 변환하는 헬퍼 메서드 추가
+    private Integer parsePrice(String priceStr) {
+        if (priceStr == null || priceStr.isBlank()) {
+            return 0;
+        }
+        try {
+            // 숫자 외의 문자가 섞여 있을 경우를 대비해 정규식 처리 후 변환
+            return Integer.parseInt(priceStr.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     @Transactional(readOnly = true)

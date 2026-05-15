@@ -25,7 +25,10 @@ public class GarmentController {
     @PostMapping(consumes = "multipart/form-data")
     public ResponseEntity<GarmentResponse> upload(
             @RequestPart("file") MultipartFile file,
-            @RequestParam(value = "category", required = false) String category,
+            @RequestParam(value = "category",  required = false) String category,
+            @RequestParam(value = "name",      required = false) String name,      // ★ 추가: 프론트의 name 수신
+            @RequestParam(value = "brandName", required = false) String brandName, // ★ 추가: 프론트의 brandName 수신
+            @RequestParam(value = "price",     required = false) String price,     // ★ 추가: 프론트의 price 수신
             Authentication authentication
     ) throws IOException {
         if (authentication == null) {
@@ -33,8 +36,11 @@ public class GarmentController {
         }
 
         String email = authentication.getName();
+
+        // ★ service.upload 호출 시 파라미터 추가 전송
+        // (주의: GarmentService.java의 upload 메서드 시그니처도 함께 수정되어야 합니다)
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(service.upload(file, category, email));
+                .body(service.upload(file, category, name, brandName, price, email));
     }
 
     // GET /api/v1/garments?q=&category=&sourceType=&brandKey=
