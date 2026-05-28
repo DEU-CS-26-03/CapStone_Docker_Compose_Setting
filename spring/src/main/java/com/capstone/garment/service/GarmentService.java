@@ -30,7 +30,7 @@ public class GarmentService {
     private static final List<String> ALLOWED_TYPES = Arrays.asList("image/jpeg", "image/png");
     private static final long MAX_SIZE_BYTES = 20 * 1024 * 1024L;
     private static final List<String> ALLOWED_CATEGORIES = Arrays.asList(
-            "top", "bottom", "dress", "outer", "shoes", "bag", "upper", "lower", "overall" // 프론트 매핑(upper, lower) 허용 위해 추가
+            "top", "bottom", "dress", "outer", "shoes", "bag", "upper", "lower", "overall"
     );
 
     public GarmentService(GarmentRepository repository, UserRepository userRepository) {
@@ -39,17 +39,9 @@ public class GarmentService {
     }
 
     @Transactional
-    public GarmentResponse upload(MultipartFile file, String category, String name, String brandName, String price, String email) throws IOException {
+    // 💡 파라미터에 String fileUrl 추가
+    public GarmentResponse upload(MultipartFile file, String fileUrl, String category, String name, String brandName, String price, String email) throws IOException {
 
-        String contentType = file.getContentType();
-        if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
-            throw new IllegalArgumentException("JPG 또는 PNG 파일만 업로드할 수 있습니다.");
-        }
-        if (file.getSize() > MAX_SIZE_BYTES) {
-            throw new IllegalArgumentException("파일 크기는 20MB를 초과할 수 없습니다.");
-        }
-
-        // ALLOWED_CATEGORIES에 이미 outer, dress가 포함되어 있으므로 추가 수정 불필요
         if (category != null && !category.isBlank() && !ALLOWED_CATEGORIES.contains(category)) {
             throw new IllegalArgumentException("유효하지 않은 카테고리입니다. 허용: " + ALLOWED_CATEGORIES);
         }
@@ -58,13 +50,35 @@ public class GarmentService {
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         String garmentId = "gar_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        String extension = "image/jpeg".equals(contentType) ? ".jpg" : ".png";
-        String savedFilename = garmentId + extension;
 
-        Path dirPath = Paths.get(uploadDir);
-        Files.createDirectories(dirPath);
-        Files.copy(file.getInputStream(), dirPath.resolve(savedFilename),
-                StandardCopyOption.REPLACE_EXISTING);
+        String finalFileUrl = fileUrl; // 기본적으로 웹 URL이 들어왔다면 그대로 사용
+        String contentType = null;
+        String originalFilename = null;
+
+        // ★ 1. 파일이 존재하는 경우 (로컬 파일 업로드)
+        if (file != null && !file.isEmpty()) {
+            contentType = file.getContentType();
+            if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
+                throw new IllegalArgumentException("JPG 또는 PNG 파일만 업로드할 수 있습니다.");
+            }
+            if (file.getSize() > MAX_SIZE_BYTES) {
+                throw new IllegalArgumentException("파일 크기는 20MB를 초과할 수 없습니다.");
+            }
+
+            String extension = "image/jpeg".equals(contentType) ? ".jpg" : ".png";
+            String savedFilename = garmentId + extension;
+            originalFilename = file.getOriginalFilename();
+
+            Path dirPath = Paths.get(uploadDir);
+            Files.createDirectories(dirPath);
+            Files.copy(file.getInputStream(), dirPath.resolve(savedFilename), StandardCopyOption.REPLACE_EXISTING);
+
+            finalFileUrl = "/files/garments/" + savedFilename;
+        }
+        // ★ 2. 파일도 없고, 프론트에서 보낸 URL도 없는 경우 에러 처리
+        else if (fileUrl == null || fileUrl.isBlank()) {
+            throw new IllegalArgumentException("이미지 파일이나 유효한 웹 이미지 URL 중 하나는 반드시 제공해야 합니다.");
+        }
 
         Garment entity = new Garment();
         entity.setGarmentId(garmentId);
@@ -73,19 +87,21 @@ public class GarmentService {
         entity.setSourceType("UPLOAD");
         entity.setCategory(category);
 
-        // ★ 2. 프론트에서 받은 텍스트 데이터 엔티티에 저장 (이름 없음 문제 해결)
         entity.setName(name != null && !name.isBlank() ? name : "이름 없음");
         entity.setBrandKey(brandName != null && !brandName.isBlank() ? brandName : "기타");
-        entity.setPrice(parsePrice(price)); // 문자열 가격을 숫자로 변환
+        entity.setPrice(parsePrice(price));
 
-        entity.setFilename(file.getOriginalFilename());
-        entity.setContentType(contentType);
-        entity.setFileUrl("/files/garments/" + savedFilename);
+        // 파일이 있을 때만 파일명과 컨텐츠 타입 지정 (URL만 올 경우엔 생략됨)
+        if (originalFilename != null) entity.setFilename(originalFilename);
+        if (contentType != null) entity.setContentType(contentType);
+
+        // 최종 결정된 경로 (로컬 파일 경로 or 외부 웹 URL) 저장
+        entity.setFileUrl(finalFileUrl);
 
         repository.save(entity);
         return toResponse(entity);
     }
-    // ★ 3. 가격 문자열을 Integer로 안전하게 변환하는 헬퍼 메서드 추가
+
     private Integer parsePrice(String priceStr) {
         if (priceStr == null || priceStr.isBlank()) return 0;
         try {
@@ -106,7 +122,6 @@ public class GarmentService {
                 .collect(Collectors.toList());
     }
 
-    // 빈 문자열은 null로 처리해 JPQL의 :param IS NULL 조건이 제대로 작동하도록
     private String blankToNull(String s) {
         return (s == null || s.isBlank()) ? null : s;
     }
@@ -145,18 +160,14 @@ public class GarmentService {
         repository.save(entity);
     }
 
-    // ★ 추가됨: 가상 피팅 결과 별점 기반 맞춤형 의류 추천
     @Transactional(readOnly = true)
     public List<GarmentResponse> getRecommendations(String type, String category) {
         List<Garment> garments;
-
-        // 프론트에서 넘어온 type 파라미터가 "similar"면 같은 카테고리, 아니면 다른 카테고리에서 무작위 4개 조회
         if ("similar".equalsIgnoreCase(type)) {
             garments = repository.findSimilarGarments(category);
         } else {
             garments = repository.findDifferentGarments(category);
         }
-
         return garments.stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());

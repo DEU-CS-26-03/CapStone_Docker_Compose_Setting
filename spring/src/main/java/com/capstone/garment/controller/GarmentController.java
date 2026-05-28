@@ -5,6 +5,7 @@ import com.capstone.garment.dto.GarmentUpdateRequest;
 import com.capstone.garment.service.GarmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -23,22 +24,25 @@ public class GarmentController {
     private final GarmentService service;
 
     // POST /api/v1/garments
-    @PostMapping(consumes = "multipart/form-data")
+    // 💡 수정됨: 파일과 URL 모두 유연하게 받을 수 있도록 consumes 및 required 옵션 수정
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<GarmentResponse> upload(
-            @RequestPart("file") MultipartFile file,
+            @RequestParam(value = "file",      required = false) MultipartFile file,     // 파일 필수 해제
+            @RequestParam(value = "fileUrl",   required = false) String fileUrl,         // ★ 추가: 웹 URL
             @RequestParam(value = "category",  required = false) String category,
-            @RequestParam(value = "name",      required = false) String name,      // 추가
-            @RequestParam(value = "brandName", required = false) String brandName, // 추가
-            @RequestParam(value = "price",     required = false) String price,     // 추가
+            @RequestParam(value = "name",      required = false) String name,
+            @RequestParam(value = "brandName", required = false) String brandName,
+            @RequestParam(value = "price",     required = false) String price,
             Authentication authentication
     ) throws IOException {
         String email = authentication.getName();
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(service.upload(file, category, name, brandName, price, email));
+                // ★ 파라미터에 fileUrl 추가
+                .body(service.upload(file, fileUrl, category, name, brandName, price, email));
     }
 
     @DeleteMapping("/{garmentId}")
-    @PreAuthorize("hasRole('ADMIN')") // ★ 관리자만 삭제 가능하도록 보안 강화
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> delete(@PathVariable String garmentId) {
         service.softDelete(garmentId);
         return ResponseEntity.ok(Map.of("message", "의류가 비노출 처리되었습니다."));
@@ -70,7 +74,6 @@ public class GarmentController {
         return ResponseEntity.ok(service.update(garmentId, request));
     }
 
-    // ★ 추가됨: 가상 피팅 결과 기반 맞춤형 의류 추천 (별점 연동)
     // GET /api/v1/garments/recommend?type=similar&category=upper
     @GetMapping("/recommend")
     public ResponseEntity<List<GarmentResponse>> recommend(
