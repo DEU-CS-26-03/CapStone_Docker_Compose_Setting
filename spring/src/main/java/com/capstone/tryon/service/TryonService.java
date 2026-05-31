@@ -61,7 +61,6 @@ public class TryonService {
         String tryonId = "tryon_" + UUID.randomUUID().toString().replace("-", "").substring(0, 8);
 
         // ★ [중요] 파일을 DB 저장 전에 먼저 물리적으로 저장합니다.
-        // 이렇게 해야 response와 AsyncProcessor에 null이 전달되지 않습니다.
         String personPath = saveFile(request.getPersonImage(), tryonId, "person");
         String clothPath = saveFile(request.getClothImage(), tryonId, "cloth");
 
@@ -71,19 +70,20 @@ public class TryonService {
         job.setUserId(userId);
         job.setStatus("queued");
         job.setProgress(0);
-        job.setUserImageId(personPath);  // 경로 세팅
-        job.setGarmentId(clothPath);    // 경로 세팅
+        job.setUserImageId(personPath);
+        job.setGarmentId(clothPath);
         job.setClothType(request.getClothType());
 
-        // 4. DB와 Redis에 즉시 반영 (Flush를 사용하여 트랜잭션 확정 준비)
+        // 4. DB와 Redis에 즉시 반영
         tryonJobRepository.saveAndFlush(job);
 
         try {
             jobRedisRepository.save(tryonId, "queued", 0);
         } catch (Exception e) { log.warn("[Redis] 저장 실패: {}", e.getMessage()); }
 
-        // 5. 비동기 Python 추론 요청 (이미 파일 경로가 확정된 상태)
-        tryonAsyncProcessor.process(tryonId, personPath, clothPath, request.getClothType());
+        // 5. 비동기 Python 추론 요청
+        // 💡 [컴파일 에러 해결!]: 마지막 파라미터로 userId를 추가하여 넘겨줍니다.
+        tryonAsyncProcessor.process(tryonId, personPath, clothPath, request.getClothType(), userId);
 
         TryonResponse res = toResponse(job);
         res.setMessage("가상 피팅 작업이 생성되었습니다.");
@@ -121,7 +121,6 @@ public class TryonService {
 
     @Transactional(readOnly = true)
     public List<TryonResponse> listByUser(String email) {
-        // ★ 에러 방지: list 조회 시에도 안전하게 유저를 매핑
         Long userId = 1L;
         List<User> users = userRepository.findAll();
         if (!users.isEmpty()) {

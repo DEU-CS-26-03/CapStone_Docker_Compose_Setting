@@ -27,7 +27,7 @@ public class TryonJob {
     @Column(name = "user_image_id")
     private String userImageId;
 
-
+    @Builder.Default
     @Column(name = "cloth_type")
     private String clothType = "upper";
 

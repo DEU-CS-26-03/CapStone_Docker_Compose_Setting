@@ -1,4 +1,4 @@
-package com.capstone.storage.controller;
+package com.capstone.result.controller;
 
 import com.capstone.result.dto.FeedbackRequest;
 import com.capstone.result.dto.FeedbackResponse;
@@ -17,11 +17,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/results")
 @RequiredArgsConstructor
-public class StorageResultController {
+public class ResultController {
 
     private final ResultService service;
 
-    // GET /api/v1/results — 내 결과 목록 조회 (기존 /histories 흡수)
+    // GET /api/v1/results — 내 결과 목록 조회
     @GetMapping
     public ResponseEntity<List<ResultResponse>> list(Authentication authentication) {
         return ResponseEntity.ok(service.listByUser(authentication.getName()));
@@ -43,7 +43,7 @@ public class StorageResultController {
         return ResponseEntity.ok(Map.of("message", "결과가 삭제되었습니다."));
     }
 
-    // POST /api/v1/results/{resultId}/feedback — 별점 저장
+    // POST /api/v1/results/{resultId}/feedback — 별점 및 코멘트 저장 (프론트에서 사용!)
     @PostMapping("/{resultId}/feedback")
     public ResponseEntity<FeedbackResponse> saveFeedback(
             @PathVariable String resultId,
@@ -54,7 +54,7 @@ public class StorageResultController {
                 service.saveFeedback(resultId, request, authentication.getName()));
     }
 
-    // GET /api/v1/results/{resultId}/recommendations — 별점 기반 추천 조회
+    // GET /api/v1/results/{resultId}/recommendations — 추천 의류 조회
     @GetMapping("/{resultId}/recommendations")
     public ResponseEntity<List<GarmentResponse>> getRecommendations(
             @PathVariable String resultId

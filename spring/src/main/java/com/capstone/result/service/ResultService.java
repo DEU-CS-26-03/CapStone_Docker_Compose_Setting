@@ -100,7 +100,7 @@ public class ResultService {
     }
 
     private Result findResult(String resultId) {
-        return resultRepository.findById(resultId)
+        return resultRepository.findByResultId(resultId)
                 .orElseThrow(() -> new IllegalArgumentException("결과를 찾을 수 없습니다: " + resultId));
     }
 

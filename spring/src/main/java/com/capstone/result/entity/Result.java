@@ -6,7 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.OffsetDateTime;
 
 @Getter
-@Setter // ★ 에러 로그의 'setDeleted', 'getGarmentCategory' 등 해결
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -39,7 +39,7 @@ public class Result {
     private Integer generationMs;
 
     @Column(name = "garment_category")
-    private String garmentCategory; // ★ getGarmentCategory() 에러 해결
+    private String garmentCategory;
 
     private int rating;
     private String comment;
