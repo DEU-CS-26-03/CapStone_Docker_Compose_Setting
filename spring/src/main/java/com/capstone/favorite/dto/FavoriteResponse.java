@@ -27,6 +27,9 @@ public class FavoriteResponse {
     @JsonProperty("brand_key")
     private String brandKey;
 
+    @JsonProperty("garment_name")
+    private String garmentName;
+
     @JsonProperty("favorited_at")
     private OffsetDateTime favoritedAt;
 }

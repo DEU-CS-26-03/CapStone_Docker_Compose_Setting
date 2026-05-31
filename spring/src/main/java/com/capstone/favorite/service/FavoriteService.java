@@ -29,13 +29,21 @@ public class FavoriteService {
         return favoriteRepository.findByUserIdOrderByCreatedAtDesc(user.getId())
                 .stream()
                 .map(fav -> {
+                    // 즐겨찾기 된 의류의 상세 정보를 꺼내옵니다.
                     Garment g = garmentRepository.findById(fav.getGarmentId())
                             .orElseThrow(() -> new IllegalArgumentException(
                                     "의류를 찾을 수 없습니다: " + fav.getGarmentId()));
+
                     return new FavoriteResponse(
-                            String.valueOf(g.getGarmentId()), g.getStatus(), g.getSourceType(),
-                            g.getCategory(), g.getFilename(), g.getFileUrl(),
-                            g.getBrandKey(), fav.getCreatedAt()
+                            String.valueOf(g.getGarmentId()),
+                            g.getStatus(),
+                            g.getSourceType(),
+                            g.getCategory(),
+                            g.getFilename(),
+                            g.getFileUrl(),
+                            g.getBrandKey(),
+                            g.getName(),        // ★ 프론트엔드가 기다리던 진짜 옷 이름!
+                            fav.getCreatedAt()
                     );
                 })
                 .collect(Collectors.toList());
