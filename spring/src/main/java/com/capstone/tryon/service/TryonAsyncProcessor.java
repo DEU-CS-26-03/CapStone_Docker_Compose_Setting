@@ -20,7 +20,6 @@ public class TryonAsyncProcessor {
 
     private final TryonService tryonService;
     private final CatVtonClient catVtonClient;
-    // [핵심]: DB 저장을 위해 ResultRepository 주입
     private final ResultRepository resultRepository;
 
     @Value("${FILE_RESULT_ROOT:/data/results}")
@@ -29,7 +28,7 @@ public class TryonAsyncProcessor {
     public TryonAsyncProcessor(
             TryonService tryonService,
             @Qualifier("catVtonApiClient") CatVtonClient catVtonClient,
-            ResultRepository resultRepository // 생성자 주입
+            ResultRepository resultRepository
     ) {
         this.tryonService = tryonService;
         this.catVtonClient = catVtonClient;
@@ -70,17 +69,19 @@ public class TryonAsyncProcessor {
 
             // 4. 저장 완료된 URL 생성
             String resultImageUrl = "https://apivirtualtryon.p-e.kr/uploads/results/" + filename;
-            String resultId = "res_" + tryonId.substring(0,8);
 
-            // [추가된 핵심 기능]: AI 성공 시 무조건 results 테이블에 데이터 Insert!
+            // +++ [디벨롭 핵심]: DB 충돌 완벽 방어를 위한 무작위 UUID 결과 ID 발급 +++
+            String resultId = "res_" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+
+            // AI 성공 시 무조건 results 테이블에 데이터 Insert!
             Result newResult = Result.builder()
                     .resultId(resultId)
                     .tryonId(tryonId)
-                    .userId(userId) // 어떤 유저의 결과인지 저장
+                    .userId(userId)
                     .resultImageUrl(resultImageUrl)
                     .garmentCategory(clothType)
                     .generationMs(generationMs)
-                    .rating(0) // 초기 별점은 0점
+                    .rating(0)
                     .deleted(false)
                     .build();
             resultRepository.save(newResult);
